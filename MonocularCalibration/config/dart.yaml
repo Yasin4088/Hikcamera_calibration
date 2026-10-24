@@ -1,0 +1,70 @@
+%YAML:1.0
+---
+# 五板块完整配置。输入模式仅由 input.mode 选择：camera / video / image。
+# 媒体与模型相对路径以本 YAML 所在目录为基准。
+input:
+   mode: "camera"
+   path: ""         # camera 模式下可留空；image/video 模式填写媒体路径
+
+# 标定矩阵对应 image_width/image_height；缩放或裁剪后须调整内参。
+# 相机与网口 IP 已实机确认；标定时 OffsetX/OffsetY 均为 0，采集时保持一致。
+# MonocularCalibration 采集只读取 cameras 单相机配置。
+cameras:
+   # MV-CS200-10GC
+   device_ip: "" # 相机设备 IP，已在 MVS 确认
+   net_ip: ""  # 相机对应的上位机网口
+   exposure_us: 30000.      # 手动曝光时间，微秒
+   gain: 0.                # 初始手动增益，启动时按设备支持范围校验
+   extra_info_delay_s: 0.    # TODO: extra_info 延迟，秒
+   image_width: 5472
+   image_height: 3648
+   camera_matrix: !!opencv-matrix
+      rows: 3
+      cols: 3
+      dt: d
+      data: [ 1.0413773396924413e+04, 0., 2.7627048705159195e+03, 0.,1.0413773396924413e+04, 1.9512524109037827e+03, 0., 0., 1. ]
+   # 顺序 k1,k2,p1,p2,k3；narrow 模型固定 k2,p1,p2,k3 为 0。
+   distortion_coefficients: !!opencv-matrix
+      rows: 5
+      cols: 1
+      dt: d
+      data: [ 4.6428439722793605e-02, -3.1388110146078069e-01, 0., 0.,4.5197696922835711e+00 ]
+
+# capacity 为每侧容量；时间差单位为 ms，允许等于阈值。
+frame_queue:
+   capacity: 4
+   max_timestamp_diff_ms: 5
+
+# 当前左图四切、右图整图；重叠为相邻切块总宽度，padding 为 ROI 每边外扩量。
+yolo:
+   model_path: "../weights/GuideLightDetect.onnx"
+   device: "CPU"
+   input_size: 512           # 须与模型支持的输入形状一致
+   tile_overlap_px: 30       # 原图像素，须小于输入图片宽高
+   left_padding_px: 25
+   right_padding_px: 10
+   confidence_threshold: 0.25
+   nms_iou_threshold: 0.45
+   warmup_count: 3           # 每套 batch 请求的预热次数，至少 1
+
+# 左右相机分别设置绿色差分阈值；范围[-255,255]，支持小数，保留下界<D<=上界的像素。
+guide_light:
+   right_diff_lower: 30.
+   right_diff_upper: 255.
+   left_diff_lower: 30.
+   left_diff_upper: 255.
+
+# 来源：CalibrationResults/stereo_20261012_full/stereo.yaml。
+# 坐标变换：X_right_mm = R * X_left_mm + T_mm；平移单位为毫米。
+# 当前仅保存参数，尚未接入配置读取。
+stereo_calibration:
+   R: !!opencv-matrix
+      rows: 3
+      cols: 3
+      dt: d
+      data: [ 9.9964435457872591e-01, 4.5170417503459506e-03,2.6282326622810270e-02, -4.1948020914231903e-03,9.9991551707302662e-01, -1.2302940786481895e-02,-2.6335679112114076e-02, 1.2188316143238152e-02,9.9957884979390010e-01 ]
+   T_mm: !!opencv-matrix
+      rows: 3
+      cols: 1
+      dt: d
+      data: [ -4.7634223614970233e+02, -2.4918748431355193e+00, 2.8778709134123977e+02 ]
