@@ -3,31 +3,29 @@
 # 单目标定配置。输入模式仅由 input.mode 选择：camera / video / image。
 # 媒体路径相对本 YAML 所在目录解析。
 input:
-   mode: "camera"
-   path: ""         # camera 模式下可留空；image/video 模式填写媒体路径
+  mode: "camera"
+  path: ""         # camera 模式下可留空；image/video 模式填写媒体路径
 
 # 单目标定采集只读取 cameras 配置。
 # 标定矩阵对应 image_width/image_height；缩放或裁剪后须调整内参。
 # 标定时 OffsetX/OffsetY 均为 0，采集时保持一致。
 cameras:
-   # 当前实机：MV-CU120-10UC (USB 相机，无 device_ip/net_ip)
-   device_ip: ""
-   net_ip: ""
-   exposure_us: 30000.      # 手动曝光时间，微秒
-   gain: 0.                # 初始手动增益，启动时按设备支持范围校验
-   extra_info_delay_s: 0.    # TODO: extra_info 延迟，秒
-   image_width: 4024
-   image_height: 3036
-   camera_matrix: !!opencv-matrix
-      rows: 3
-      cols: 3
-      dt: d
-      data: [ 3247.3740253229698, 0., 1984.5581133713349, 0.,
-       3247.3740253229698, 1552.4679687164953, 0., 0., 1. ]
-   # 顺序 k1,k2,p1,p2,k3；narrow 模型固定 k2,p1,p2,k3 为 0。
-   distortion_coefficients: !!opencv-matrix
-      rows: 5
-      cols: 1
-      dt: d
-      data: [ -0.1841496064581073, 0.21306302250160919, 0., 0.,
-       0.039100859920270827 ]
+  # 当前实机：MV-CU120-10UC (USB 相机，无 device_ip/net_ip)
+  device_ip: ""
+  net_ip: ""
+  exposure_us: 30000.      # 手动曝光时间，微秒
+  gain: 0.                 # 初始手动增益，启动时按设备支持范围校验
+  extra_info_delay_s: 0.   # TODO: extra_info 延迟，秒
+  image_width: 4024
+  image_height: 3036
+  camera_matrix: !!opencv-matrix
+    rows: 3
+    cols: 3
+    dt: d
+    data: [ 3247.3740253229698, 0., 1984.5581133713349, 0., 3247.3740253229698, 1552.4679687164953, 0., 0., 1. ]
+  # 顺序 k1,k2,p1,p2,k3；narrow 模型固定 k2,p1,p2,k3 为 0。
+  distortion_coefficients: !!opencv-matrix
+    rows: 5
+    cols: 1
+    dt: d
+    data: [ -0.1841496064581073, 0.21306302250160919, 0., 0., 0.039100859920270827 ]
