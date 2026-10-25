@@ -31,7 +31,7 @@
 在仓库根目录执行：
 
 ```bash
-cd /home/robot/Hikcamera_calibration/MonocularCalibration
+cd /home/robot/Hikcamera_calibration/MonocularCalibration_OpenCV
 ./build_demarcate.sh
 ```
 
