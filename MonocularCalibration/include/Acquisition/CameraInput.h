@@ -66,6 +66,7 @@ private:
 
     CameraParams params_;                 // 复用统一配置，采集类不解析 YAML
     const CameraSide side_;               // 绑定当前设备的左右身份
+    unsigned int transportLayer_ = 0;     // MVS 传输层类型（GigE/USB）
     void* handle_ = nullptr;              // MVS 设备句柄，SDK 头文件放在 .cpp 中
     bool sdkInitialized_ = false;         // 当前设备持有一次 SDK 初始化引用
     bool opened_ = false;                 // 已成功打开设备

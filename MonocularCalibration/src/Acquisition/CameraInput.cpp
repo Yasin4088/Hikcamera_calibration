@@ -98,23 +98,51 @@ std::string describeGigE(const MV_CC_DEVICE_INFO& device)
     return stream.str();
 }
 
-const MV_CC_DEVICE_INFO* selectGigEDevice(const std::optional<std::uint32_t>& requestedDeviceIp)
+std::string describeUsb(const MV_CC_DEVICE_INFO& device)
+{
+    if (device.nTLayerType != MV_USB_DEVICE) return "non-usb-device";
+    const auto& usb = device.SpecialInfo.stUsb3VInfo;
+    std::ostringstream stream;
+    stream << "usb model=" << fixedBufferToString(usb.chModelName, sizeof(usb.chModelName))
+           << ", serial=" << fixedBufferToString(usb.chSerialNumber, sizeof(usb.chSerialNumber));
+    return stream.str();
+}
+
+std::string describeDevice(const MV_CC_DEVICE_INFO& device)
+{
+    if (device.nTLayerType == MV_GIGE_DEVICE) return describeGigE(device);
+    if (device.nTLayerType == MV_USB_DEVICE) return describeUsb(device);
+    std::ostringstream stream;
+    stream << "unsupported transport layer=" << device.nTLayerType;
+    return stream.str();
+}
+
+const MV_CC_DEVICE_INFO* selectDevice(const std::optional<std::uint32_t>& requestedDeviceIp)
 {
     MV_CC_DEVICE_INFO_LIST devices{};
-    checkSdk(MV_CC_EnumDevices(MV_GIGE_DEVICE, &devices), "MV_CC_EnumDevices");
+    checkSdk(MV_CC_EnumDevices(MV_GIGE_DEVICE | MV_USB_DEVICE, &devices), "MV_CC_EnumDevices");
     if (devices.nDeviceNum == 0)
-        throw std::runtime_error("No GigE camera discovered by MVS; check power/network");
+        throw std::runtime_error("No camera discovered by MVS; check power/USB/network");
 
     const MV_CC_DEVICE_INFO* selected = nullptr;
+    const MV_CC_DEVICE_INFO* fallbackUsb = nullptr;
     std::ostringstream discovered;
     for (unsigned int index = 0; index < devices.nDeviceNum; ++index) {
         const auto* info = devices.pDeviceInfo[index];
-        if (info == nullptr || info->nTLayerType != MV_GIGE_DEVICE) continue;
-        const auto& gige = info->SpecialInfo.stGigEInfo;
+        if (info == nullptr) continue;
         if (discovered.tellp() > 0) discovered << " | ";
-        discovered << describeGigE(*info);
-        if (requestedDeviceIp && gige.nCurrentIp != *requestedDeviceIp) continue;
-        if (selected == nullptr) selected = info;
+        discovered << describeDevice(*info);
+        if (info->nTLayerType == MV_GIGE_DEVICE) {
+            const auto& gige = info->SpecialInfo.stGigEInfo;
+            if (requestedDeviceIp && gige.nCurrentIp != *requestedDeviceIp) continue;
+            if (selected == nullptr) selected = info;
+            continue;
+        }
+        if (!requestedDeviceIp && info->nTLayerType == MV_USB_DEVICE && fallbackUsb == nullptr)
+            fallbackUsb = info;
+    }
+    if (selected == nullptr && !requestedDeviceIp) {
+        selected = fallbackUsb;
     }
 
     if (selected == nullptr) {
@@ -188,13 +216,20 @@ void CameraDevice::FindCamera()
         info.nTLayerType = MV_GIGE_DEVICE;
         info.SpecialInfo.stGigEInfo.nCurrentIp = *requestedDeviceIp;
         info.SpecialInfo.stGigEInfo.nNetExport = *requestedNetIp;
+        transportLayer_ = MV_GIGE_DEVICE;
         checkSdk(MV_CC_CreateHandle(&handle_, &info), "MV_CC_CreateHandle");
     } else {
-        const auto* selected = selectGigEDevice(requestedDeviceIp);
-        const auto& gige = selected->SpecialInfo.stGigEInfo;
-        params_.deviceIp = formatIp(gige.nCurrentIp);
-        params_.netIp = formatIp(gige.nNetExport);
-        std::fprintf(stderr, "[CameraInput] auto-selected %s\n", describeGigE(*selected).c_str());
+        const auto* selected = selectDevice(requestedDeviceIp);
+        transportLayer_ = selected->nTLayerType;
+        if (transportLayer_ == MV_GIGE_DEVICE) {
+            const auto& gige = selected->SpecialInfo.stGigEInfo;
+            params_.deviceIp = formatIp(gige.nCurrentIp);
+            params_.netIp = formatIp(gige.nNetExport);
+        } else {
+            params_.deviceIp.clear();
+            params_.netIp.clear();
+        }
+        std::fprintf(stderr, "[CameraInput] auto-selected %s\n", describeDevice(*selected).c_str());
         checkSdk(MV_CC_CreateHandle(&handle_, selected), "MV_CC_CreateHandle");
     }
     checkSdk(MV_CC_OpenDevice(handle_), "MV_CC_OpenDevice");
@@ -204,12 +239,14 @@ void CameraDevice::FindCamera()
 void CameraDevice::SetCamera()
 {
     // 1. 探测网口包长；探测失败时沿用设备包长，并输出诊断信息。
-    const int packetSize = MV_CC_GetOptimalPacketSize(handle_);
-    if (packetSize > 0)
-        checkSdk(MV_CC_SetIntValueEx(handle_, "GevSCPSPacketSize", packetSize), "GevSCPSPacketSize");
-    else
-        std::fprintf(stderr, "[CameraInput] packet size probe failed for %s (0x%x); keeping device value\n",
-                     params_.deviceIp.c_str(), static_cast<unsigned int>(packetSize));
+    if (transportLayer_ == MV_GIGE_DEVICE) {
+        const int packetSize = MV_CC_GetOptimalPacketSize(handle_);
+        if (packetSize > 0)
+            checkSdk(MV_CC_SetIntValueEx(handle_, "GevSCPSPacketSize", packetSize), "GevSCPSPacketSize");
+        else
+            std::fprintf(stderr, "[CameraInput] packet size probe failed for %s (0x%x); keeping device value\n",
+                         params_.deviceIp.c_str(), static_cast<unsigned int>(packetSize));
+    }
 
     // 2. 使用连续采集和手动曝光、增益，避免相机自动调整覆盖 YAML 参数。
     checkSdk(MV_CC_SetEnumValueByString(handle_, "AcquisitionMode", "Continuous"), "AcquisitionMode");
@@ -220,10 +257,17 @@ void CameraDevice::SetCamera()
     setFloat(handle_, "Gain", params_.gain);
 
     // 3. 保持标定时的图像尺寸和原点；首版不自动改变硬件 ROI 或标定内参。
-    if (getInt(handle_, "Width") != params_.width || getInt(handle_, "Height") != params_.height ||
-        getInt(handle_, "OffsetX") != 0 || getInt(handle_, "OffsetY") != 0)
-        throw std::runtime_error("Camera dimensions/offset do not match full-image calibration: " +
-                                 params_.deviceIp);
+    const auto width = getInt(handle_, "Width");
+    const auto height = getInt(handle_, "Height");
+    const auto offsetX = getInt(handle_, "OffsetX");
+    const auto offsetY = getInt(handle_, "OffsetY");
+    if (width != params_.width || height != params_.height || offsetX != 0 || offsetY != 0) {
+        std::ostringstream message;
+        message << "Camera dimensions/offset do not match full-image calibration"
+                << " (camera: " << width << "x" << height << ", offset " << offsetX << "," << offsetY
+                << "; config: " << params_.width << "x" << params_.height << ", offset 0,0)";
+        throw std::runtime_error(message.str());
+    }
 
     // 4. 限制 SDK 缓存，并在支持时优先取最新帧以减小延迟。
     checkSdk(MV_CC_SetImageNodeNum(handle_, 2), "MV_CC_SetImageNodeNum");

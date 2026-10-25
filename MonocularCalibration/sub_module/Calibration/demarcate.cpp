@@ -12,6 +12,7 @@
 #include <opencv2/imgcodecs.hpp>
 #include <opencv2/imgproc.hpp>
 #include <algorithm>
+#include <array>
 #include <atomic>
 #include <chrono>
 #include <cmath>
@@ -22,8 +23,11 @@
 #include <functional>
 #include <iomanip>
 #include <iostream>
+#include <memory>
 #include <mutex>
 #include <optional>
+#include <cctype>
+#include <cstdio>
 #include <sstream>
 #include <stdexcept>
 #include <thread>
@@ -51,6 +55,64 @@ struct Options {
     int minViews = 10, maxViews = 30;
     bool automatic = true;
 };
+
+std::string shellQuote(const std::string& value)
+{
+    std::string quoted;
+    quoted.reserve(value.size() + 2);
+    quoted.push_back('\'');
+    for (char c : value) {
+        if (c == '\'') quoted += "'\\''";
+        else quoted.push_back(c);
+    }
+    quoted.push_back('\'');
+    return quoted;
+}
+
+std::optional<std::string> readCommandOutput(const std::string& command)
+{
+    std::string output;
+    std::array<char, 256> buffer{};
+    std::unique_ptr<FILE, int (*)(FILE*)> pipe(popen(command.c_str(), "r"), pclose);
+    if (!pipe) return std::nullopt;
+    while (fgets(buffer.data(), static_cast<int>(buffer.size()), pipe.get()))
+        output += buffer.data();
+    const int status = pclose(pipe.release());
+    if (status != 0) return std::nullopt;
+    while (!output.empty() && (output.back() == '\n' || output.back() == '\r'))
+        output.pop_back();
+    if (output.empty()) return std::nullopt;
+    return output;
+}
+
+std::optional<fs::path> browseInputDirectory(const fs::path& initialDirectory)
+{
+    const auto initial = initialDirectory.string();
+    const auto zenity = readCommandOutput(
+        "zenity --file-selection --directory --title="
+        + shellQuote("选择标定图片文件夹")
+        + " --filename=" + shellQuote(initial + "/") + " 2>/dev/null");
+    if (zenity) return fs::path(*zenity);
+
+    const auto kdialog = readCommandOutput(
+        "kdialog --getexistingdirectory "
+        + shellQuote(initial)
+        + " --title " + shellQuote("选择标定图片文件夹") + " 2>/dev/null");
+    if (kdialog) return fs::path(*kdialog);
+    return std::nullopt;
+}
+
+bool hasBmpImages(const fs::path& directory)
+{
+    if (!fs::is_directory(directory)) return false;
+    for (const auto& entry : fs::directory_iterator(directory)) {
+        if (!entry.is_regular_file()) continue;
+        auto ext = entry.path().extension().string();
+        std::transform(ext.begin(), ext.end(), ext.begin(), [](unsigned char c) { return static_cast<char>(std::tolower(c)); });
+        if (ext == ".bmp") return true;
+    }
+    return false;
+}
 
 Options parseOptions(int argc, char** argv)
 {
@@ -103,9 +165,24 @@ Options parseOptions(int argc, char** argv)
         !std::isfinite(o.interval) || o.interval<.1 || o.interval>3600 ||
         o.minViews<3 || o.maxViews<o.minViews || o.maxViews>100)
         throw std::invalid_argument("Invalid board, interval or view count limits");
-    o.input=parser.has("input")?fs::path(parser.get<std::string>("input")):fs::path(DART_PROJECT_ROOT)/"sub_module/Calibration/Input";
+    const auto defaultInput = fs::path(DART_PROJECT_ROOT) / "sub_module/Calibration/Input";
+    if (parser.has("input")) {
+        o.input = fs::path(parser.get<std::string>("input"));
+    } else if (o.mode == Options::Mode::Calibration) {
+        const auto selected = browseInputDirectory(defaultInput);
+        if (!selected) {
+            throw std::invalid_argument(
+                "No input directory selected (dialog cancelled or unavailable). "
+                "Use --input=/path/to/BMPs to run calibration");
+        }
+        o.input = *selected;
+    } else {
+        o.input = defaultInput;
+    }
     if (o.input.empty()) throw std::invalid_argument("--input cannot be empty");
     o.input=fs::absolute(o.input);
+    if (o.mode == Options::Mode::Calibration && !hasBmpImages(o.input))
+        throw std::invalid_argument("No BMP images found in selected directory: " + o.input.string());
     if (parser.has("output")) {
         o.output=parser.get<std::string>("output");
         if (o.output.empty()) throw std::invalid_argument("--output cannot be empty");

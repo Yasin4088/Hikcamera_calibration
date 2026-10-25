@@ -2,12 +2,45 @@
 #include <cctype>
 #include <map>
 #include <limits>
+#include <string_view>
 
 // Included after the monocular solver; capture never runs a chessboard detector.
 namespace livecalib {
 inline void ensure(bool ok,const std::string& message) {if(!ok) throw std::runtime_error(message);}
 constexpr const char* collectWindow="单目标定 - 采集 BMP";
 constexpr const char* reviewWindow="单目标定 - 离线 ROI";
+inline bool naturalLess(std::string_view a, std::string_view b) {
+    std::size_t i = 0, j = 0;
+    while (i < a.size() && j < b.size()) {
+        const unsigned char ca = static_cast<unsigned char>(a[i]);
+        const unsigned char cb = static_cast<unsigned char>(b[j]);
+        const bool da = std::isdigit(ca) != 0;
+        const bool db = std::isdigit(cb) != 0;
+        if (da && db) {
+            const std::size_t ai = i, bj = j;
+            while (i < a.size() && std::isdigit(static_cast<unsigned char>(a[i])) != 0) ++i;
+            while (j < b.size() && std::isdigit(static_cast<unsigned char>(b[j])) != 0) ++j;
+            std::size_t at = ai, bt = bj;
+            while (at < i && a[at] == '0') ++at;
+            while (bt < j && b[bt] == '0') ++bt;
+            const std::size_t al = i - at, bl = j - bt;
+            if (al != bl) return al < bl;
+            if (al > 0) {
+                const int cmp = a.compare(at, al, b, bt, bl);
+                if (cmp != 0) return cmp < 0;
+            }
+            const std::size_t ad = i - ai, bd = j - bj;
+            if (ad != bd) return ad < bd;
+            continue;
+        }
+        const int la = std::tolower(ca), lb = std::tolower(cb);
+        if (la != lb) return la < lb;
+        if (ca != cb) return ca < cb;
+        ++i;
+        ++j;
+    }
+    return a.size() < b.size();
+}
 inline std::string fileStamp(const fs::path& p) {
     return std::to_string(fs::file_size(p))+":"+std::to_string(fs::last_write_time(p).time_since_epoch().count());
 }
@@ -30,7 +63,9 @@ inline MonoDataset readDataset(const Options& o) {
         if(!entry.is_regular_file() || ext!=".bmp" || entry.path().stem().string().find(".pending")!=std::string::npos) continue;
         MonoRecord r;r.path=entry.path();r.key=entry.path().stem().string();r.sample.image=entry.path().filename().string();result.records.push_back(std::move(r));
     }
-    std::sort(result.records.begin(),result.records.end(),[](const MonoRecord& a,const MonoRecord& b){return a.path.filename()<b.path.filename();});
+    std::sort(result.records.begin(),result.records.end(),[](const MonoRecord& a,const MonoRecord& b){
+        return naturalLess(a.path.filename().string(), b.path.filename().string());
+    });
     ensure(!result.records.empty(),"No BMP images in "+o.input.string());
     for(const auto& r:result.records) {
         const auto image=cv::imread(r.path.string(),cv::IMREAD_COLOR|cv::IMREAD_IGNORE_ORIENTATION);

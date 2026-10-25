@@ -1,136 +1,139 @@
-# 单目标定独立模块（MonocularCalibration）
+# 单目标定模块（MonocularCalibration）
 
-这个目录是从 `DartAutoAim` **复制**出来的单目标定链路，原仓库文件未移动、未删除。  
-模块包含：
+本目录提供海康单相机内参标定流程，核心可执行程序是 `demarcate`，支持：
 
-- 单目标定可执行程序：`demarcate`
-- 实时采集界面（海康相机取流 + BMP保存）
-- 离线可视化标注界面（ROI框选、角点检查、覆盖率可视化）
-- OpenCV 交互标定求解与结果导出
+- 在线采集 BMP（相机实时预览 + 自动/手动存图）
+- 离线 ROI 框选（逐图检查角点与覆盖率）
+- OpenCV 求解与结果导出（`intrinsics.yaml` / `review.png`）
 
-## 目录说明
+建议按“构建 -> 采集 -> 离线标定 -> 导出结果”执行。
 
-- `CMakeLists.txt`：独立构建脚本
-- `sub_module/Calibration/demarcate.cpp`：标定主程序入口
-- `sub_module/Calibration/monocular_workflow.hpp`：单目标定采集/离线流程与UI交互
-- `sub_module/calibration_ui.hpp`：界面字体、文本与鼠标输入兼容
-- `sub_module/opencv_interactive_calibration/`：OpenCV 交互标定核心
-- `include/` + `src/`：相机采集、队列、配置读取等依赖
-- `config/dart.yaml`：默认配置文件
+## 目录与脚本
+
+- `build_demarcate.sh`：构建 `demarcate`（支持 `--build-type` / `--clean` / `--mvs-root`）
+- `run_collect.sh`：采集入口（自动构建缺失的 `demarcate`）
+- `run_calibration.sh`：离线标定入口（自动构建缺失的 `demarcate`）
+- `sub_module/Calibration/demarcate.cpp`：命令行参数与流程入口
+- `sub_module/Calibration/monocular_workflow.hpp`：采集、离线交互、求解逻辑
+- `config/dart.yaml`：默认采集配置（只读取 `cameras`）
 
 ## 环境依赖
 
-1. 海康 MVS SDK（默认路径 `/opt/MVS`）
-2. OpenCV 组件：`core/imgproc/imgcodecs/calib3d/highgui`  
-   - `freetype` 为可选：存在时显示完整中文；缺失时自动降级为 OpenCV 原生字体
-   - `aruco` 为可选：单目标定流程（棋盘）不依赖它
-3. 中文字体（用于界面文字）  
-   - 推荐安装：`fonts-noto-cjk`  
-   - 或设置环境变量：`DART_CALIBRATION_FONT=/绝对路径/xxx.ttc`
+1. 海康 MVS SDK（默认 `/opt/MVS`）
+2. OpenCV：`core/imgproc/imgcodecs/calib3d/highgui`
+   - `freetype` 可选（有则显示更完整中文）
+   - `aruco` 可选（本流程不依赖 ArUco）
+3. 中文字体（推荐 `fonts-noto-cjk`）
+   - 或设置 `DART_CALIBRATION_FONT=/绝对路径/xxx.ttc`
 
-## 编译
+## 快速开始（推荐）
 
-在工作空间根目录执行：
-
-```bash
-cd /home/robot/Hikcamera_calibration
-cmake -S MonocularCalibration -B MonocularCalibration/build -DMVS_ROOT=/opt/MVS
-cmake --build MonocularCalibration/build --target demarcate -j
-```
-
-> 如果你的 MVS 不在 `/opt/MVS`，把 `-DMVS_ROOT=...` 改成实际路径。
-
-## 标定操作流程
-
-建议严格按“采集 -> 离线标定 -> 导出结果”执行。
-
-### 1) 采集单相机 BMP
+在仓库根目录执行：
 
 ```bash
-./MonocularCalibration/build/demarcate --collect
+cd /home/robot/Hikcamera_calibration/MonocularCalibration
+./build_demarcate.sh
 ```
 
-默认保存路径：
+### 1) 采集 BMP
 
-- `MonocularCalibration/sub_module/Calibration/Input`
+```bash
+./run_collect.sh
+```
 
-采集界面快捷键：
+默认输入目录（自动按时间戳新建）：
+
+- `sub_module/Calibration/Input/camera_YYYYMMDD_HHMMSS/`
+
+采集时目录必须是“新目录或空目录”，程序不会覆盖已有图片。
+
+常见示例：
+
+```bash
+./run_collect.sh ./sub_module/Calibration/Input/camera_test
+./run_collect.sh ./sub_module/Calibration/Input/camera_test --interval=0.8 --auto=true
+CONFIG=/path/to/dart.yaml ./run_collect.sh
+```
+
+### 2) 离线框选与标定
+
+```bash
+./run_calibration.sh
+```
+
+默认读取输入目录：
+
+- `sub_module/Calibration/Input/camera`
+
+默认输出目录（自动按时间戳新建）：
+
+- `sub_module/Calibration/Results/camera_YYYYMMDD_HHMMSS/`
+
+常见示例：
+
+```bash
+./run_calibration.sh ./sub_module/Calibration/Input/camera_test
+./run_calibration.sh ./sub_module/Calibration/Input/camera_test ./sub_module/Calibration/Results/my_result --model=full --min-views=12 --max-views=40
+```
+
+## 直接调用 demarcate（高级）
+
+不通过脚本时可直接运行：
+
+```bash
+./build/demarcate --collect --config=./config/dart.yaml --input=/path/to/new_or_empty_dir
+./build/demarcate --calibration --input=/path/to/bmps --output=/path/to/new_result_dir
+```
+
+常用参数：
+
+- `--interval=<秒>`：采集自动保存间隔（默认 `1.0`）
+- `--auto=<true|false>`：采集启动时是否自动保存
+- `--model=<auto|full|k1|narrow>`：标定模型
+- `--cols=<N> --rows=<N> --square-mm=<毫米>`：棋盘规格（默认 `11x8`，`30mm`）
+- `--min-views=<N> --max-views=<N>`：质量评估最小/最大视图数量
+
+说明：
+
+- `--calibration` 若未给 `--input`，会尝试弹窗选择目录；取消会退出
+- `--output` 目录必须不存在，避免覆盖历史结果
+
+## 界面快捷键
+
+采集界面：
 
 - `A`：自动采样/暂停
 - `空格`：立即保存一帧
 - `Q` / `Esc`：退出
 
-采集建议：
-
-- 棋盘格保持清晰、曝光稳定
-- 多采“位置、角度、远近、边缘区域”不同姿态
-- 建议至少采集 20~30 张可用图像
-
-### 2) 离线可视化标定（ROI框选）
-
-```bash
-./MonocularCalibration/build/demarcate --calibration
-```
-
-如果图片目录自定义过，可指定：
-
-```bash
-./MonocularCalibration/build/demarcate --calibration --input=/你的BMP目录
-```
-
-离线界面常用操作：
+离线界面：
 
 - 左键拖拽：框选棋盘 ROI
-- 滚轮：缩放
+- 滚轮 / `+` / `-` / `0`：缩放与复位
 - 右键拖动：平移
-- `空格`：接受当前图并进入下一张
-- `N`：跳过当前图
-- `B/P`：上一张/下一张
-- `R`：清除当前 ROI
-- `D`：从标定集中移除当前图
+- `空格` / `N`：接受 / 跳过并下一张
+- `B` / `P`：上一张 / 下一张
+- `R` / `D`：清除 ROI / 从标定集中移除
 - `S`：保存当前求解结果
-- `Q` / `Esc`：退出并结束流程
+- `Q` / `Esc`：退出
 
-### 3) 结果输出
+## 输出文件
 
-默认输出到新目录（按时间戳命名）：
+标定输出目录（`Results/camera_时间戳`）主要包含：
 
-- `MonocularCalibration/sub_module/Calibration/Results/camera_YYYYMMDD_HHMMSS/`
+- `intrinsics.yaml`：内参、畸变、RMS、逐图误差、质量检查状态
+- `review.png`：离线界面截图
 
-主要文件：
+输入目录下会维护：
 
-- `intrinsics.yaml`：内参、畸变、RMS、每张图误差、标定状态
-- `review.png`：离线标定界面截图
-- `annotations.yaml`：标注过程数据（保存在输入图目录）
+- `annotations.yaml`：ROI、角点与图片状态缓存（用于恢复标注）
 
-## 配置文件说明
+## 配置说明（`config/dart.yaml`）
 
-默认使用：`MonocularCalibration/config/dart.yaml`
+采集只读取 `cameras`：
 
-采集模式读取 `cameras` 单相机配置：
-
-- `device_ip`：相机 IP
-- `net_ip`：本机网口 IP
+- `device_ip` / `net_ip`（USB 相机可留空）
 - `exposure_us` / `gain`
-- `image_width` / `image_height`（必须与实际采集尺寸一致）
+- `image_width` / `image_height`（需与实际采集一致）
 
-可通过参数切换配置文件：
-
-```bash
-./MonocularCalibration/build/demarcate --collect --config=/path/to/dart.yaml
-```
-
-## 常见问题
-
-1. **提示找不到 MVS 库**
-   - 检查 `-DMVS_ROOT` 是否正确
-   - 确认 `${MVS_ROOT}/include/MvCameraControl.h` 和 `${MVS_ROOT}/lib/64/libMvCameraControl.so` 存在
-
-2. **界面中文乱码或报字体错误**
-   - 安装 `fonts-noto-cjk`
-   - 或配置 `DART_CALIBRATION_FONT`
-
-3. **离线阶段无可用图片**
-   - 确认 `--input` 路径下有 `.bmp` 文件
-   - 检查图片是否可被 OpenCV 正常读取
-
+`input.mode` 不影响本模块采集/离线流程，离线以 `--input` 指定的 BMP 目录为准。

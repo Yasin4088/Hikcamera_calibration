@@ -112,6 +112,14 @@ cv::FileNode section(const cv::FileNode& root, const char* key)
     return node;
 }
 
+cv::FileNode optionalSection(const cv::FileNode& root, const char* key)
+{
+    const auto node = root[key];
+    if (node.isNone()) return {};
+    if (!node.isMap()) invalid(key, "expected a mapping");
+    return node;
+}
+
 int readInteger(const cv::FileNode& node, const char* key,
                 const std::string& prefix, int minimum)
 {
@@ -215,11 +223,20 @@ void DartCongfig::load(const std::string& configPath)
         const auto root = file.root();
         const auto base = std::filesystem::absolute(configPath).parent_path();
         auto nextInput = readInput(section(root, "input"), base);
-        auto nextQueue = readQueue(section(root, "frame_queue"));
         auto nextCamera = readCamera(section(root, "cameras"), "cameras");
-        auto nextYOLO = readYOLO(section(root, "yolo"), base);
-        auto nextGuideLight = readGuideLight(section(root, "guide_light"));
-        auto nextStereoscopicMeasurement = readStereoscopicMeasurement(section(root,"stereo_calibration"));
+        auto nextQueue = frameQueue;
+        auto nextYOLO = yolo;
+        auto nextGuideLight = guideLight;
+        auto nextStereoscopicMeasurement = stereoscopicmeasurement;
+
+        if (const auto node = optionalSection(root, "frame_queue"); !node.isNone())
+            nextQueue = readQueue(node);
+        if (const auto node = optionalSection(root, "yolo"); !node.isNone())
+            nextYOLO = readYOLO(node, base);
+        if (const auto node = optionalSection(root, "guide_light"); !node.isNone())
+            nextGuideLight = readGuideLight(node);
+        if (const auto node = optionalSection(root, "stereo_calibration"); !node.isNone())
+            nextStereoscopicMeasurement = readStereoscopicMeasurement(node);
 
         // 全部板块校验通过后提交，任何解析错误都保留之前的配置。
         input = std::move(nextInput);
