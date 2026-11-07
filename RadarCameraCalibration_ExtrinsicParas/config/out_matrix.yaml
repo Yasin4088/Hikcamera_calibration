@@ -1,12 +1,12 @@
-%YAML:1.0
+%YAML 1.2
 ---
 world_rvec: !!opencv-matrix
    rows: 3
    cols: 1
    dt: d
-   data: [ 0.0, 0.0, 0.0 ]
+   data: [ 1.5291426345032506, -1.9095806177442347, 1.1705407777603782 ]
 world_tvec: !!opencv-matrix
    rows: 3
    cols: 1
    dt: d
-   data: [ 0.0, 0.0, 0.0 ]
+   data: [ -2.7635048851789752, 8.5614667139922389, 26.195799671900943 ]

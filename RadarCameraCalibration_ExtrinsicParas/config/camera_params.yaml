@@ -4,10 +4,22 @@ camera_matrix: !!opencv-matrix
    rows: 3
    cols: 3
    dt: d
-   data: [ 3711.092180, 0.000000, 2061.038266, 0.000000, 3711.630093,
-       1611.618369, 0.000000, 0.000000, 1.000000 ]
+   data: [ 3227.846610, 0.000000, 2006.653920, 0.000000, 3239.297440,
+       1573.934380, 0.000000, 0.000000, 1.000000 ]
 dist_coeffs: !!opencv-matrix
    rows: 1
    cols: 5
    dt: d
-   data: [ -0.030269, 0.085927, 0.009000, 0.000461, 0.000000 ]
+   data: [ -0.183478, 0.229470, 0.002854, 0.003010, 0.000000 ]
+hik_camera:
+   camera_type: 1
+   device_index: 0
+   gige_index: 0
+   camera_ip: ""
+   pixel_format: "BayerBG8"
+   acquisition_frame_rate: 120.
+   exposure_time: 26580.
+   gain: 12.
+   trigger_mode: 0
+   trigger_source: 2
+   trigger_activation: 0

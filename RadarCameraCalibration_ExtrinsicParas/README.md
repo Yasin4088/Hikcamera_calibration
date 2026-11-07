@@ -1,113 +1,81 @@
-# 雷达相机外参标定（独立版）
+# 雷达相机外参标定（纯 C++）
 
-该目录包含从 `T-DT_Radar` 中拆分出的**不依赖 ROS2** 的相机外参标定模块。
+该目录提供一个独立的 C++ 外参标定工具，不依赖 ROS2，流程为：
 
-## 1）拆分内容
+1. 通过海康 MVS SDK 连接相机并读取配置参数（曝光、增益、帧率等）
+2. 手动五点选取图像坐标
+3. 调用 `solvePnP` 计算外参
+4. 写入 `config/out_matrix.yaml`
 
-- 核心方法：手动选择图像点 + `solvePnP` 解算外参。
-- 世界坐标点与 `src/tdt_vision/calibrate` 使用的 5 点一致。
-- 输出格式与 OpenCV YAML 兼容：
-  - `world_rvec`
-  - `world_tvec`
-
-## 2）推荐环境
-
-- 推荐 Python 3.9 及以上。
-- 推荐使用 `venv` 虚拟环境运行，避免污染系统环境。
-
-## 3）配置文件说明
+## 配置文件
 
 - `config/camera_params.yaml`
-  - 相机内参矩阵与畸变系数。
+  - 相机内参 `camera_matrix`、畸变 `dist_coeffs`
+  - 海康运行参数 `hik_camera`（曝光、增益、触发、设备索引等）
 - `config/world_points.yaml`
-  - 标定使用的世界坐标点（带顺序）。
+  - 世界坐标点，按顺序写入（当前为 5 点）
 - `config/out_matrix.yaml`
-  - 外参输出文件（每次标定成功后会覆盖写入）。
+  - 输出外参（`world_rvec` / `world_tvec`）
 
-如果你使用了不同相机，请先替换 `config/camera_params.yaml`。
-
-## 4）在 venv 中运行（推荐）
-
-### A. 进入目录
+## 编译
 
 ```bash
 cd /home/robot/Hikcamera_calibration/RadarCameraCalibration_ExtrinsicParas
+mkdir -p build
+cd build
+cmake ..
+make -j
 ```
 
-### B. 创建虚拟环境
+如果 MVS SDK 不在默认路径（如 `/opt/MVS`），可先设置：
 
 ```bash
-python3 -m venv .venv
+export HIK_MVS_ROOT=/path/to/MVS
 ```
 
-### C. 激活虚拟环境
+## 运行
+
+先做配置检查：
 
 ```bash
-source .venv/bin/activate
+cd /home/robot/Hikcamera_calibration/RadarCameraCalibration_ExtrinsicParas
+./build/extrinsic_calibrator --check-only
 ```
 
-激活后命令行前通常会出现 `(.venv)` 前缀。
-
-### D. 安装依赖
+启动标定：
 
 ```bash
-python -m pip install --upgrade pip
-python -m pip install -r requirements.txt
+cd /home/robot/Hikcamera_calibration/RadarCameraCalibration_ExtrinsicParas
+./build/extrinsic_calibrator
 ```
 
-### E. 先做配置检查
+可选参数：
 
-```bash
-python calibrate_extrinsic.py --check-only
-```
+- `--camera-params config/camera_params.yaml`
+- `--world-points config/world_points.yaml`
+- `--output config/out_matrix.yaml`
+- `--display-width 1536 --display-height 1125`
+- `--timeout-ms 1000`
 
-### F. 启动标定
+## 交互说明
 
-1. 使用实时相机（通常是 0 号设备）：
-
-```bash
-python calibrate_extrinsic.py --input 0
-```
-
-2. 使用视频文件：
-
-```bash
-python calibrate_extrinsic.py --input /path/to/video.mp4
-```
-
-3. 使用单张图片：
-
-```bash
-python calibrate_extrinsic.py --input /path/to/image.png
-```
-
-### G. 退出虚拟环境
-
-```bash
-deactivate
-```
-
-## 5）交互操作说明
-
-1. 按 `Enter` 进入标定模式。
-2. 按顺序点击当前目标点。
-3. 使用 `W/A/S/D` 对当前点进行像素级微调。
-4. 按 `n` 确认并保存当前点。
-5. 所有点确认后自动执行外参解算并写入 `config/out_matrix.yaml`。
+1. 按 `Enter` 进入标定模式
+2. 按顺序点击当前目标点
+3. 使用 `W/A/S/D` 对当前点像素级微调
+4. 按 `n` 确认该点
+5. 所有点确认后自动求解并写入 `config/out_matrix.yaml`
 
 快捷键：
 
-- `q` 或 `Esc`：退出程序
-- `r`：重置当前已选点并重新开始
+- `q` / `Esc`：退出
+- `r`：重置当前选点
 
-## 6）点位顺序（必须一致）
+## 五点顺序（T-DT标点顺序）
 
-必须严格按照 `config/world_points.yaml` 的顺序点击：
+必须严格按照 `config/world_points.yaml` 顺序点击：
 
 1. `self_FORTRESS`
 2. `self_Tower`
 3. `enemy_Base`
 4. `enemy_Tower`
 5. `enemy_High`
-
-如果顺序错乱，输出外参会明显异常。

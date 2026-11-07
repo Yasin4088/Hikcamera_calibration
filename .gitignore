@@ -3,3 +3,7 @@ DartAutoAim/
 **.gz
 **/__pycache__
 **/.venv
+**/build
+**/install
+**/log
+ost.yaml
