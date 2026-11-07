@@ -1,2 +1,5 @@
 T-DT_Radar/
 DartAutoAim/
+**.gz
+**/__pycache__
+**/.venv

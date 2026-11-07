@@ -1,0 +1,21 @@
+points:
+  - name: self_FORTRESS
+    x: 5.487
+    y: -7.5
+    z: 0.0
+  - name: self_Tower
+    x: 10.934
+    y: -11.18
+    z: 0.85
+  - name: enemy_Base
+    x: 16.925
+    y: -3.625
+    z: 1.746
+  - name: enemy_Tower
+    x: 21.175
+    y: -3.96
+    z: 0.15
+  - name: enemy_High
+    x: 22.31
+    y: -12.1
+    z: 0.6
