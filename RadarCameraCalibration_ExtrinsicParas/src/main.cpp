@@ -245,6 +245,43 @@ WorldPoints LoadWorldPoints(const std::string &path) {
   return result;
 }
 
+int PromptPointCount(std::size_t max_points) {
+  if (max_points < 4) {
+    throw std::runtime_error("At least 4 world points are required.");
+  }
+
+  while (true) {
+    std::cout << "Input calibration point count n (4-" << max_points << "): " << std::flush;
+    std::string line;
+    if (!std::getline(std::cin, line)) {
+      throw std::runtime_error("Failed to read n from stdin.");
+    }
+    line = Trim(line);
+    if (line.empty()) {
+      std::cout << "n cannot be empty.\n";
+      continue;
+    }
+
+    try {
+      const int n = std::stoi(line);
+      if (n < 4 || n > static_cast<int>(max_points)) {
+        std::cout << "n must be in [4, " << max_points << "].\n";
+        continue;
+      }
+      return n;
+    } catch (const std::exception &) {
+      std::cout << "Invalid integer input. Try again.\n";
+    }
+  }
+}
+
+WorldPoints TakeFirstNPoints(const WorldPoints &source, int n) {
+  WorldPoints sliced;
+  sliced.labels.assign(source.labels.begin(), source.labels.begin() + n);
+  sliced.points.assign(source.points.begin(), source.points.begin() + n);
+  return sliced;
+}
+
 class HikCameraCapture {
  public:
   HikCameraCapture() = default;
@@ -609,14 +646,14 @@ int main(int argc, char **argv) {
     cv::Mat dist_coeffs;
     RuntimeCameraConfig runtime_cfg;
     LoadCameraConfig(args.camera_params_path, &camera_matrix, &dist_coeffs, &runtime_cfg);
-    const WorldPoints world_points = LoadWorldPoints(args.world_points_path);
+    const WorldPoints all_world_points = LoadWorldPoints(args.world_points_path);
 
     std::cout << "Loaded camera params from: " << args.camera_params_path << "\n";
-    std::cout << "Loaded " << world_points.points.size() << " world points from: "
+    std::cout << "Loaded " << all_world_points.points.size() << " world points from: "
               << args.world_points_path << "\n";
-    for (std::size_t i = 0; i < world_points.points.size(); ++i) {
-      const auto &p = world_points.points[i];
-      std::cout << "  " << (i + 1) << ". " << world_points.labels[i] << ": [" << p.x << ", " << p.y
+    for (std::size_t i = 0; i < all_world_points.points.size(); ++i) {
+      const auto &p = all_world_points.points[i];
+      std::cout << "  " << (i + 1) << ". " << all_world_points.labels[i] << ": [" << p.x << ", " << p.y
                 << ", " << p.z << "]\n";
     }
 
@@ -624,6 +661,10 @@ int main(int argc, char **argv) {
       std::cout << "Config check passed.\n";
       return 0;
     }
+
+    const int n = PromptPointCount(all_world_points.points.size());
+    const WorldPoints world_points = TakeFirstNPoints(all_world_points, n);
+    std::cout << "Using first " << n << " points for calibration.\n";
 
     HikCameraCapture camera;
     camera.Initialize(runtime_cfg);

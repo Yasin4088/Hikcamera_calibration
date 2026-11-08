@@ -3,7 +3,7 @@
 该目录提供一个独立的 C++ 外参标定工具，不依赖 ROS2，流程为：
 
 1. 通过海康 MVS SDK 连接相机并读取配置参数（曝光、增益、帧率等）
-2. 手动五点选取图像坐标
+2. 手动 n 点选取图像坐标（运行时输入 n）
 3. 调用 `solvePnP` 计算外参
 4. 写入 `config/out_matrix.yaml`
 
@@ -13,7 +13,7 @@
   - 相机内参 `camera_matrix`、畸变 `dist_coeffs`
   - 海康运行参数 `hik_camera`（曝光、增益、触发、设备索引等）
 - `config/world_points.yaml`
-  - 世界坐标点，按顺序写入（当前为 5 点）
+  - 世界坐标点，按顺序写入（程序会在运行时询问 n，并使用前 n 个点）
 - `config/out_matrix.yaml`
   - 输出外参（`world_rvec` / `world_tvec`）
 
@@ -48,6 +48,8 @@ cd /home/robot/Hikcamera_calibration/RadarCameraCalibration_ExtrinsicParas
 cd /home/robot/Hikcamera_calibration/RadarCameraCalibration_ExtrinsicParas
 ./build/extrinsic_calibrator
 ```
+
+启动后终端会提示输入 `n`（`4 <= n <= world_points.yaml` 中点数），随后按 `world_points.yaml` 的前 `n` 个点顺序采点并求解外参。
 
 重投影误差可视化验收：
 
@@ -129,9 +131,9 @@ python3 offline_extrinsic_calibrator.py
 - `r` 或 `c`：清空当前验收结果，重新测
 - `q` / `Esc`：退出
 
-## 五点顺序（T-DT标点顺序）
+## n点顺序
 
-必须严格按照 `config/world_points.yaml` 顺序点击：
+必须严格按照 `config/world_points.yaml` 的前 `n` 个点顺序点击：
 
 1. `self_FORTRESS`
 2. `self_Tower`

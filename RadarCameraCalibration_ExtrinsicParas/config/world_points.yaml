@@ -1,21 +1,33 @@
 points:
-  - name: self_FORTRESS
+  - name: point_1
     x: 3.560
     y: 2.650
     z: 0.0
-  - name: self_Tower
+  - name: point_2
     x: 5.790
     y: 4.260
     z: 0.44
-  - name: enemy_Base
-    x: 5.575
-    y: 6.985
-    z: 0.200
-  - name: enemy_Tower
+  - name: point_3
+    x: 1.700
+    y: 3.660
+    z: 0.07
+  - name: point_4
     x: 2.005
     y: 6.980
     z: 0.30
-  - name: enemy_High
+  - name: point_5
     x: 4.990
     y: 8.235
     z: 0.350
+  - name: point_6
+    x: 1.410
+    y: 5.840
+    z: 0.0
+  - name: point_7
+    x: 0.100
+    y: 8.370
+    z: 0.60
+  - name: point_8
+    x: 2.10
+    y: 7.20
+    z: 0.50
