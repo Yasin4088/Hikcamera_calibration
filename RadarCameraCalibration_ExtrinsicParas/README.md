@@ -49,6 +49,48 @@ cd /home/robot/Hikcamera_calibration/RadarCameraCalibration_ExtrinsicParas
 ./build/extrinsic_calibrator
 ```
 
+重投影误差可视化验收：
+
+```bash
+cd /home/robot/Hikcamera_calibration/RadarCameraCalibration_ExtrinsicParas
+./build/reprojection_error_viewer
+```
+
+## 离线图片外参标定（推荐）
+
+如果你想直接使用 `images` 目录中的图片离线标定（不连相机），运行：
+
+```bash
+cd /home/robot/Hikcamera_calibration/RadarCameraCalibration_ExtrinsicParas
+python3 offline_extrinsic_calibrator.py
+```
+
+可选参数：
+
+- `--image-dir images`（图片目录）
+- `--single-image images/Image_01.jpg`（只标定单张图）
+- `--camera-params config/camera_params.yaml`
+- `--world-points config/world_points.yaml`
+- `--output config/offline_extrinsics.yaml`（每张图的结果）
+- `--write-best-to config/out_matrix.yaml`（将 RMS 最小的一组写成最终外参）
+
+交互键位（离线程序）：
+
+- 鼠标左键：选当前点
+- `W/A/S/D`：像素级微调当前待确认点
+- `n`：确认当前点
+- `u`：撤销上一个已确认点
+- `r`：重置当前图片全部点
+- `x`：跳过当前图片
+- `q` / `Esc`：退出
+
+说明：离线程序会同时弹出一个 `*_roi` 放大窗口（带十字线）用于微调观察。
+
+离线程序会按 `config/world_points.yaml` 的点位顺序进行采点，并在结束后输出：
+
+- `config/offline_extrinsics.yaml`：每张图的 `rvec/tvec` 与重投影误差
+- `config/out_matrix.yaml`：自动写入误差最小（RMS 最低）的外参
+
 可选参数：
 
 - `--camera-params config/camera_params.yaml`
@@ -56,6 +98,7 @@ cd /home/robot/Hikcamera_calibration/RadarCameraCalibration_ExtrinsicParas
 - `--output config/out_matrix.yaml`
 - `--display-width 1536 --display-height 1125`
 - `--timeout-ms 1000`
+- `--extrinsic config/out_matrix.yaml`（重投影验收程序使用）
 
 ## 交互说明
 
@@ -69,6 +112,22 @@ cd /home/robot/Hikcamera_calibration/RadarCameraCalibration_ExtrinsicParas
 
 - `q` / `Esc`：退出
 - `r`：重置当前选点
+
+## 重投影误差可视化说明
+
+`reprojection_error_viewer` 会实时显示：
+
+- 绿色点：由 `world_points + out_matrix` 计算得到的重投影点
+- 红色点：你在画面上手动点击的实际点
+- 青色连线：每个点的偏差方向与大小
+- 文本统计：`mean / rms / max` 像素误差
+
+操作键位：
+
+- `Enter`：开始按顺序选点
+- 鼠标左键 + `W/A/S/D` + `n`：精调并确认当前点
+- `r` 或 `c`：清空当前验收结果，重新测
+- `q` / `Esc`：退出
 
 ## 五点顺序（T-DT标点顺序）
 

@@ -42,3 +42,18 @@ target_link_libraries(extrinsic_calibrator PRIVATE
   ${MVS_LIBRARY}
   pthread
 )
+
+add_executable(reprojection_error_viewer
+  src/reprojection_error.cpp
+)
+
+target_include_directories(reprojection_error_viewer PRIVATE
+  ${OpenCV_INCLUDE_DIRS}
+  ${MVS_INCLUDE_DIR}
+)
+
+target_link_libraries(reprojection_error_viewer PRIVATE
+  ${OpenCV_LIBS}
+  ${MVS_LIBRARY}
+  pthread
+)

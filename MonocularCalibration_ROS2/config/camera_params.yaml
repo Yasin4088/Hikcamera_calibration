@@ -14,8 +14,8 @@
 
     # 光学参数
     acquisition_frame_rate: 200.0   # Unit: Hz
-    exposure_time: 26580            # Unit: us
-    gain: 12.0                      # Range: 0.0 ~ 16.9, Unit: dB
+    exposure_time: 15000            # Unit: us
+    gain: 6.0                      # Range: 0.0 ~ 16.9, Unit: dB
 
     # 触发参数
     trigger_mode: 0 # 0: Off, 1: On

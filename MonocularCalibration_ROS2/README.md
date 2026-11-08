@@ -102,7 +102,11 @@ colcon build --symlink-install --cmake-args -DCMAKE_BUILD_TYPE=Release
 ### 2.3 运行
 
 ```bash
+cd /home/robot/Hikcamera_calibration/MonocularCalibration_ROS2
+# 检测相机是否正常连接
 ros2 launch hik_camera_ros2_driver hik_camera_launch.py
+# 标定
+ros2 launch hik_camera_ros2_driver cam_calibration.launch.py
 ```
 
 ## 3. ToDoList
