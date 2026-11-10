@@ -4,13 +4,14 @@
 
 1. 通过海康 MVS SDK 连接相机并读取配置参数（曝光、增益、帧率等）
 2. 手动 n 点选取图像坐标（运行时输入 n）
-3. 调用 `solvePnP` 计算外参
+3. 调用 `solvePnPRansac + solvePnP(ITERATIVE)` 计算外参
 4. 写入 `config/out_matrix.yaml`
 
 ## 配置文件
 
 - `config/camera_params.yaml`
   - 相机内参 `camera_matrix`、畸变 `dist_coeffs`
+  - 建议填写 `image_width` / `image_height`（用于运行时分辨率一致性检查）
   - 海康运行参数 `hik_camera`（曝光、增益、触发、设备索引等）
 - `config/world_points.yaml`
   - 世界坐标点，按顺序写入（程序会在运行时询问 n，并使用前 n 个点）
@@ -58,6 +59,8 @@ cd /home/robot/Hikcamera_calibration/RadarCameraCalibration_ExtrinsicParas
 ./build/reprojection_error_viewer
 ```
 
+启动后终端会提示输入 `n`（`4 <= n <= world_points.yaml` 中点数），验收时同样只使用前 `n` 个点，确保与标定一致。
+
 ## 离线图片外参标定（推荐）
 
 如果你想直接使用 `images` 目录中的图片离线标定（不连相机），运行：
@@ -90,7 +93,7 @@ python3 offline_extrinsic_calibrator.py
 
 离线程序会按 `config/world_points.yaml` 的点位顺序进行采点，并在结束后输出：
 
-- `config/offline_extrinsics.yaml`：每张图的 `rvec/tvec` 与重投影误差
+- `config/offline_extrinsics.yaml`：每张图的 `rvec/tvec`、重投影误差与 `inlier_count`
 - `config/out_matrix.yaml`：自动写入误差最小（RMS 最低）的外参
 
 可选参数：
@@ -133,10 +136,4 @@ python3 offline_extrinsic_calibrator.py
 
 ## n点顺序
 
-必须严格按照 `config/world_points.yaml` 的前 `n` 个点顺序点击：
-
-1. `self_FORTRESS`
-2. `self_Tower`
-3. `enemy_Base`
-4. `enemy_Tower`
-5. `enemy_High`
+必须严格按照 `config/world_points.yaml` 的前 `n` 个点顺序点击

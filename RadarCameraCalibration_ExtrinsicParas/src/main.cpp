@@ -39,6 +39,13 @@ struct RuntimeCameraConfig {
   int trigger_activation = 0;
 };
 
+struct IntrinsicImageSize {
+  int width = 0;
+  int height = 0;
+
+  bool IsValid() const { return width > 0 && height > 0; }
+};
+
 struct WorldPoints {
   std::vector<std::string> labels;
   std::vector<cv::Point3f> points;
@@ -115,7 +122,7 @@ uint32_t ParseIpToUint(const std::string &ip) {
 }
 
 void LoadCameraConfig(const std::string &path, cv::Mat *camera_matrix, cv::Mat *dist_coeffs,
-                      RuntimeCameraConfig *runtime_cfg) {
+                      RuntimeCameraConfig *runtime_cfg, IntrinsicImageSize *intrinsic_size) {
   cv::FileStorage fs(path, cv::FileStorage::READ);
   if (!fs.isOpened()) {
     throw std::runtime_error("Cannot open camera params file: " + path);
@@ -125,6 +132,14 @@ void LoadCameraConfig(const std::string &path, cv::Mat *camera_matrix, cv::Mat *
   fs["dist_coeffs"] >> *dist_coeffs;
   if (camera_matrix->empty() || dist_coeffs->empty()) {
     throw std::runtime_error("camera_matrix or dist_coeffs missing in: " + path);
+  }
+  if (intrinsic_size != nullptr) {
+    cv::FileNode width_node = fs["image_width"];
+    cv::FileNode height_node = fs["image_height"];
+    if (!width_node.empty() && !height_node.empty()) {
+      width_node >> intrinsic_size->width;
+      height_node >> intrinsic_size->height;
+    }
   }
 
   cv::FileNode hik_node = fs["hik_camera"];
@@ -465,7 +480,14 @@ class CalibrationUi {
 
   bool HandleFrame(const cv::Mat &frame) {
     original_ = frame.clone();
-    cv::resize(original_, display_, cv::Size(display_width_, display_height_));
+    const float sx = static_cast<float>(display_width_) / static_cast<float>(original_.cols);
+    const float sy = static_cast<float>(display_height_) / static_cast<float>(original_.rows);
+    display_scale_ = std::min({sx, sy, 1.0f});
+    const int show_w = std::max(1, static_cast<int>(std::round(original_.cols * display_scale_)));
+    const int show_h = std::max(1, static_cast<int>(std::round(original_.rows * display_scale_)));
+    cv::resize(original_, display_, cv::Size(show_w, show_h));
+    cursor_x_ = std::clamp(cursor_x_, 0, std::max(0, display_.cols - 1));
+    cursor_y_ = std::clamp(cursor_y_, 0, std::max(0, display_.rows - 1));
 
     if (is_calibrating_) {
       const std::size_t picked = image_points_.size();
@@ -519,6 +541,9 @@ class CalibrationUi {
   }
 
   void OnMouse(int event, int x, int y, int /*flags*/) {
+    if (!PointInsideDisplay(x, y)) {
+      return;
+    }
     cursor_x_ = x;
     cursor_y_ = y;
     ShowRoi(x, y);
@@ -561,16 +586,14 @@ class CalibrationUi {
       if (key == 'w') {
         cursor_y_ = std::max(50, cursor_y_ - 1);
       } else if (key == 's') {
-        cursor_y_ = std::min(display_height_ - 51, cursor_y_ + 1);
+        cursor_y_ = std::min(display_.rows - 51, cursor_y_ + 1);
       } else if (key == 'a') {
         cursor_x_ = std::max(50, cursor_x_ - 1);
       } else if (key == 'd') {
-        cursor_x_ = std::min(display_width_ - 51, cursor_x_ + 1);
+        cursor_x_ = std::min(display_.cols - 51, cursor_x_ + 1);
       } else if (key == 'n') {
-        const float x0 = static_cast<float>(cursor_x_) *
-                         (static_cast<float>(original_.cols) / static_cast<float>(display_width_));
-        const float y0 = static_cast<float>(cursor_y_) *
-                         (static_cast<float>(original_.rows) / static_cast<float>(display_height_));
+        const float x0 = static_cast<float>(cursor_x_) / display_scale_;
+        const float y0 = static_cast<float>(cursor_y_) / display_scale_;
         image_points_.emplace_back(x0, y0);
         std::cout << "saved point " << image_points_.size() << ": display=(" << cursor_x_ << ","
                   << cursor_y_ << ") original=(" << x0 << "," << y0 << ")\n";
@@ -586,10 +609,8 @@ class CalibrationUi {
   void DrawPickedPoints() {
     for (std::size_t i = 0; i < image_points_.size(); ++i) {
       const auto &pt = image_points_[i];
-      const int px =
-          static_cast<int>(pt.x * static_cast<float>(display_width_) / static_cast<float>(original_.cols));
-      const int py = static_cast<int>(pt.y * static_cast<float>(display_height_) /
-                                      static_cast<float>(original_.rows));
+      const int px = static_cast<int>(std::round(pt.x * display_scale_));
+      const int py = static_cast<int>(std::round(pt.y * display_scale_));
       cv::circle(display_, cv::Point(px, py), 6, cv::Scalar(0, 255, 0), -1);
       cv::putText(display_, std::to_string(i + 1), cv::Point(px + 10, py - 10),
                   cv::FONT_HERSHEY_SIMPLEX, 0.8, cv::Scalar(0, 255, 0), 2, cv::LINE_AA);
@@ -599,10 +620,27 @@ class CalibrationUi {
   void SolveAndSave() {
     cv::Mat rvec;
     cv::Mat tvec;
-    const bool ok = cv::solvePnP(world_points_.points, image_points_, camera_matrix_, dist_coeffs_, rvec,
-                                 tvec, false, cv::SOLVEPNP_EPNP);
-    if (!ok) {
-      throw std::runtime_error("solvePnP failed.");
+    cv::Mat inliers;
+    const bool ok = cv::solvePnPRansac(world_points_.points, image_points_, camera_matrix_, dist_coeffs_, rvec,
+                                       tvec, false, 200, 4.0, 0.99, inliers, cv::SOLVEPNP_EPNP);
+    if (!ok || inliers.rows < 4) {
+      throw std::runtime_error("solvePnPRansac failed or inliers < 4.");
+    }
+
+    std::vector<cv::Point3f> inlier_world_points;
+    std::vector<cv::Point2f> inlier_image_points;
+    inlier_world_points.reserve(static_cast<std::size_t>(inliers.rows));
+    inlier_image_points.reserve(static_cast<std::size_t>(inliers.rows));
+    for (int i = 0; i < inliers.rows; ++i) {
+      const int idx = inliers.at<int>(i, 0);
+      inlier_world_points.push_back(world_points_.points[static_cast<std::size_t>(idx)]);
+      inlier_image_points.push_back(image_points_[static_cast<std::size_t>(idx)]);
+    }
+
+    const bool refine_ok = cv::solvePnP(inlier_world_points, inlier_image_points, camera_matrix_,
+                                        dist_coeffs_, rvec, tvec, true, cv::SOLVEPNP_ITERATIVE);
+    if (!refine_ok) {
+      throw std::runtime_error("solvePnP iterative refinement failed.");
     }
 
     cv::FileStorage fs(output_path_, cv::FileStorage::WRITE);
@@ -614,9 +652,14 @@ class CalibrationUi {
     fs.release();
 
     std::cout << "Calibration complete.\n";
+    std::cout << "Inliers: " << inliers.rows << "/" << world_points_.points.size() << "\n";
     std::cout << "rvec:\n" << rvec << "\n";
     std::cout << "tvec:\n" << tvec << "\n";
     std::cout << "Saved to: " << output_path_ << "\n";
+  }
+
+  bool PointInsideDisplay(int x, int y) const {
+    return x >= 0 && y >= 0 && x < display_.cols && y < display_.rows;
   }
 
   cv::Mat camera_matrix_;
@@ -625,6 +668,7 @@ class CalibrationUi {
   std::string output_path_;
   int display_width_ = 0;
   int display_height_ = 0;
+  float display_scale_ = 1.0f;
 
   bool is_calibrating_ = false;
   bool adjust_mode_ = false;
@@ -645,7 +689,8 @@ int main(int argc, char **argv) {
     cv::Mat camera_matrix;
     cv::Mat dist_coeffs;
     RuntimeCameraConfig runtime_cfg;
-    LoadCameraConfig(args.camera_params_path, &camera_matrix, &dist_coeffs, &runtime_cfg);
+    IntrinsicImageSize intrinsic_size;
+    LoadCameraConfig(args.camera_params_path, &camera_matrix, &dist_coeffs, &runtime_cfg, &intrinsic_size);
     const WorldPoints all_world_points = LoadWorldPoints(args.world_points_path);
 
     std::cout << "Loaded camera params from: " << args.camera_params_path << "\n";
@@ -683,6 +728,21 @@ int main(int argc, char **argv) {
           break;
         }
         continue;
+      }
+      static bool frame_size_checked = false;
+      if (!frame_size_checked) {
+        frame_size_checked = true;
+        if (intrinsic_size.IsValid()) {
+          if (frame.cols != intrinsic_size.width || frame.rows != intrinsic_size.height) {
+            throw std::runtime_error("Frame size (" + std::to_string(frame.cols) + "x" +
+                                     std::to_string(frame.rows) + ") does not match intrinsic size (" +
+                                     std::to_string(intrinsic_size.width) + "x" +
+                                     std::to_string(intrinsic_size.height) + ").");
+          }
+          std::cout << "Frame size check passed: " << frame.cols << "x" << frame.rows << "\n";
+        } else {
+          std::cout << "[WARN] image_width/image_height missing in camera params; skipped size check.\n";
+        }
       }
       if (!ui.HandleFrame(frame)) {
         break;

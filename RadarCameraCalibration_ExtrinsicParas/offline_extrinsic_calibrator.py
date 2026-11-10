@@ -37,6 +37,7 @@ class SolveResult:
     mean_error: float
     rms_error: float
     max_error: float
+    inlier_count: int
 
 
 def parse_args() -> argparse.Namespace:
@@ -333,22 +334,44 @@ def solve_extrinsic(
     image_points: Sequence[Tuple[float, float]],
     camera_matrix: np.ndarray,
     dist_coeffs: np.ndarray,
-) -> Tuple[np.ndarray, np.ndarray]:
+) -> Tuple[np.ndarray, np.ndarray, int]:
     image_points_np = np.asarray(image_points, dtype=np.float32)
 
-    ok, rvec, tvec = cv2.solvePnP(
+    ok, rvec, tvec, inliers = cv2.solvePnPRansac(
         object_points,
         image_points_np,
         camera_matrix,
         dist_coeffs,
+        iterationsCount=200,
+        reprojectionError=4.0,
+        confidence=0.99,
         flags=cv2.SOLVEPNP_EPNP,
     )
-    if not ok:
-        raise RuntimeError("solvePnP (EPNP) failed.")
+    used_ransac = ok and inliers is not None and len(inliers) >= 4
+
+    if used_ransac:
+        inlier_idx = inliers.reshape(-1)
+        object_points_inliers = object_points[inlier_idx]
+        image_points_inliers = image_points_np[inlier_idx]
+        inlier_count = int(len(inlier_idx))
+    else:
+        # Fallback: avoid hard failure on difficult manual picks; refine with all points.
+        ok_init, rvec, tvec = cv2.solvePnP(
+            object_points,
+            image_points_np,
+            camera_matrix,
+            dist_coeffs,
+            flags=cv2.SOLVEPNP_EPNP,
+        )
+        if not ok_init:
+            raise RuntimeError("solvePnPRansac failed and solvePnP(EPNP) fallback also failed.")
+        object_points_inliers = object_points
+        image_points_inliers = image_points_np
+        inlier_count = int(len(image_points_np))
 
     ok_iter, rvec, tvec = cv2.solvePnP(
-        object_points,
-        image_points_np,
+        object_points_inliers,
+        image_points_inliers,
         camera_matrix,
         dist_coeffs,
         rvec,
@@ -359,7 +382,9 @@ def solve_extrinsic(
     if not ok_iter:
         raise RuntimeError("solvePnP refinement (ITERATIVE) failed.")
 
-    return rvec.astype(np.float64), tvec.astype(np.float64)
+    if not used_ransac:
+        print("[WARN] RANSAC failed or inliers < 4, fallback to all-points iterative refinement.")
+    return rvec.astype(np.float64), tvec.astype(np.float64), inlier_count
 
 
 def compute_reprojection_error(
@@ -398,6 +423,7 @@ def save_results_yaml(path: Path, results: Sequence[SolveResult], best_idx: int)
         lines.append("    mean_error: {:.6f}".format(res.mean_error))
         lines.append("    rms_error: {:.6f}".format(res.rms_error))
         lines.append("    max_error: {:.6f}".format(res.max_error))
+        lines.append(f"    inlier_count: {res.inlier_count}")
         lines.append(
             "    rvec: [{:.12f}, {:.12f}, {:.12f}]".format(
                 float(res.rvec[0, 0]), float(res.rvec[1, 0]), float(res.rvec[2, 0])
@@ -457,13 +483,14 @@ def main() -> int:
                 print(f"[INFO] Skipped image: {image_path}")
                 continue
 
-            rvec, tvec = solve_extrinsic(object_points, selected, camera_matrix, dist_coeffs)
+            rvec, tvec, inlier_count = solve_extrinsic(object_points, selected, camera_matrix, dist_coeffs)
             mean_err, rms_err, max_err = compute_reprojection_error(
                 object_points, selected, rvec, tvec, camera_matrix, dist_coeffs
             )
 
             print("rvec =", rvec.reshape(-1).tolist())
             print("tvec =", tvec.reshape(-1).tolist())
+            print(f"inliers: {inlier_count}/{len(selected)}")
             print(f"reprojection error: mean={mean_err:.4f}px rms={rms_err:.4f}px max={max_err:.4f}px")
 
             results.append(
@@ -475,6 +502,7 @@ def main() -> int:
                     mean_error=mean_err,
                     rms_error=rms_err,
                     max_error=max_err,
+                    inlier_count=inlier_count,
                 )
             )
     except KeyboardInterrupt:

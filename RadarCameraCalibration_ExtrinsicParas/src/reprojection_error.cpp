@@ -39,6 +39,13 @@ struct RuntimeCameraConfig {
   int trigger_activation = 0;
 };
 
+struct IntrinsicImageSize {
+  int width = 0;
+  int height = 0;
+
+  bool IsValid() const { return width > 0 && height > 0; }
+};
+
 struct WorldPoints {
   std::vector<std::string> labels;
   std::vector<cv::Point3f> points;
@@ -121,7 +128,7 @@ uint32_t ParseIpToUint(const std::string &ip) {
 }
 
 void LoadCameraConfig(const std::string &path, cv::Mat *camera_matrix, cv::Mat *dist_coeffs,
-                      RuntimeCameraConfig *runtime_cfg) {
+                      RuntimeCameraConfig *runtime_cfg, IntrinsicImageSize *intrinsic_size) {
   cv::FileStorage fs(path, cv::FileStorage::READ);
   if (!fs.isOpened()) {
     throw std::runtime_error("Cannot open camera params file: " + path);
@@ -131,6 +138,14 @@ void LoadCameraConfig(const std::string &path, cv::Mat *camera_matrix, cv::Mat *
   fs["dist_coeffs"] >> *dist_coeffs;
   if (camera_matrix->empty() || dist_coeffs->empty()) {
     throw std::runtime_error("camera_matrix or dist_coeffs missing in: " + path);
+  }
+  if (intrinsic_size != nullptr) {
+    cv::FileNode width_node = fs["image_width"];
+    cv::FileNode height_node = fs["image_height"];
+    if (!width_node.empty() && !height_node.empty()) {
+      width_node >> intrinsic_size->width;
+      height_node >> intrinsic_size->height;
+    }
   }
 
   cv::FileNode hik_node = fs["hik_camera"];
@@ -249,6 +264,42 @@ WorldPoints LoadWorldPoints(const std::string &path) {
     throw std::runtime_error("At least 4 world points are required.");
   }
   return result;
+}
+
+int PromptPointCount(std::size_t max_points) {
+  if (max_points < 4) {
+    throw std::runtime_error("At least 4 world points are required.");
+  }
+
+  while (true) {
+    std::cout << "Input evaluation point count n (4-" << max_points << "): " << std::flush;
+    std::string line;
+    if (!std::getline(std::cin, line)) {
+      throw std::runtime_error("Failed to read n from stdin.");
+    }
+    line = Trim(line);
+    if (line.empty()) {
+      std::cout << "n cannot be empty.\n";
+      continue;
+    }
+    try {
+      const int n = std::stoi(line);
+      if (n < 4 || n > static_cast<int>(max_points)) {
+        std::cout << "n must be in [4, " << max_points << "].\n";
+        continue;
+      }
+      return n;
+    } catch (const std::exception &) {
+      std::cout << "Invalid integer input. Try again.\n";
+    }
+  }
+}
+
+WorldPoints TakeFirstNPoints(const WorldPoints &source, int n) {
+  WorldPoints sliced;
+  sliced.labels.assign(source.labels.begin(), source.labels.begin() + n);
+  sliced.points.assign(source.points.begin(), source.points.begin() + n);
+  return sliced;
 }
 
 void LoadExtrinsic(const std::string &path, cv::Mat *rvec, cv::Mat *tvec) {
@@ -448,7 +499,14 @@ class ReprojectionErrorUi {
 
   bool HandleFrame(const cv::Mat &frame) {
     original_ = frame.clone();
-    cv::resize(original_, display_, cv::Size(display_width_, display_height_));
+    const float sx = static_cast<float>(display_width_) / static_cast<float>(original_.cols);
+    const float sy = static_cast<float>(display_height_) / static_cast<float>(original_.rows);
+    display_scale_ = std::min({sx, sy, 1.0f});
+    const int show_w = std::max(1, static_cast<int>(std::round(original_.cols * display_scale_)));
+    const int show_h = std::max(1, static_cast<int>(std::round(original_.rows * display_scale_)));
+    cv::resize(original_, display_, cv::Size(show_w, show_h));
+    cursor_x_ = std::clamp(cursor_x_, 0, std::max(0, display_.cols - 1));
+    cursor_y_ = std::clamp(cursor_y_, 0, std::max(0, display_.rows - 1));
 
     DrawProjectedPoints();
     DrawPickedPointsAndError();
@@ -486,6 +544,9 @@ class ReprojectionErrorUi {
   }
 
   void OnMouse(int event, int x, int y, int /*flags*/) {
+    if (!PointInsideDisplay(x, y)) {
+      return;
+    }
     cursor_x_ = x;
     cursor_y_ = y;
     ShowRoi(x, y);
@@ -551,16 +612,14 @@ class ReprojectionErrorUi {
       if (key == 'w') {
         cursor_y_ = std::max(50, cursor_y_ - 1);
       } else if (key == 's') {
-        cursor_y_ = std::min(display_height_ - 51, cursor_y_ + 1);
+        cursor_y_ = std::min(display_.rows - 51, cursor_y_ + 1);
       } else if (key == 'a') {
         cursor_x_ = std::max(50, cursor_x_ - 1);
       } else if (key == 'd') {
-        cursor_x_ = std::min(display_width_ - 51, cursor_x_ + 1);
+        cursor_x_ = std::min(display_.cols - 51, cursor_x_ + 1);
       } else if (key == 'n') {
-        const float x0 = static_cast<float>(cursor_x_) *
-                         (static_cast<float>(original_.cols) / static_cast<float>(display_width_));
-        const float y0 = static_cast<float>(cursor_y_) *
-                         (static_cast<float>(original_.rows) / static_cast<float>(display_height_));
+        const float x0 = static_cast<float>(cursor_x_) / display_scale_;
+        const float y0 = static_cast<float>(cursor_y_) / display_scale_;
         picked_points_.emplace_back(x0, y0);
         std::cout << "saved point " << picked_points_.size() << ": [" << x0 << ", " << y0 << "]\n";
         adjust_mode_ = false;
@@ -578,10 +637,8 @@ class ReprojectionErrorUi {
   }
 
   cv::Point ToDisplay(const cv::Point2f &pt) const {
-    const int x = static_cast<int>(std::round(pt.x * static_cast<float>(display_width_) /
-                                              static_cast<float>(original_.cols)));
-    const int y = static_cast<int>(std::round(pt.y * static_cast<float>(display_height_) /
-                                              static_cast<float>(original_.rows)));
+    const int x = static_cast<int>(std::round(pt.x * display_scale_));
+    const int y = static_cast<int>(std::round(pt.y * display_scale_));
     return {x, y};
   }
 
@@ -649,6 +706,10 @@ class ReprojectionErrorUi {
               << " px\n";
   }
 
+  bool PointInsideDisplay(int x, int y) const {
+    return x >= 0 && y >= 0 && x < display_.cols && y < display_.rows;
+  }
+
   cv::Mat camera_matrix_;
   cv::Mat dist_coeffs_;
   cv::Mat rvec_;
@@ -656,6 +717,7 @@ class ReprojectionErrorUi {
   WorldPoints world_points_;
   int display_width_ = 0;
   int display_height_ = 0;
+  float display_scale_ = 1.0f;
 
   bool is_picking_ = false;
   bool adjust_mode_ = false;
@@ -680,15 +742,16 @@ int main(int argc, char **argv) {
     cv::Mat camera_matrix;
     cv::Mat dist_coeffs;
     RuntimeCameraConfig runtime_cfg;
-    LoadCameraConfig(args.camera_params_path, &camera_matrix, &dist_coeffs, &runtime_cfg);
+    IntrinsicImageSize intrinsic_size;
+    LoadCameraConfig(args.camera_params_path, &camera_matrix, &dist_coeffs, &runtime_cfg, &intrinsic_size);
 
-    const WorldPoints world_points = LoadWorldPoints(args.world_points_path);
+    const WorldPoints all_world_points = LoadWorldPoints(args.world_points_path);
     cv::Mat rvec;
     cv::Mat tvec;
     LoadExtrinsic(args.extrinsic_path, &rvec, &tvec);
 
     std::cout << "Loaded camera params: " << args.camera_params_path << "\n";
-    std::cout << "Loaded world points: " << args.world_points_path << " (" << world_points.points.size()
+    std::cout << "Loaded world points: " << args.world_points_path << " (" << all_world_points.points.size()
               << " points)\n";
     std::cout << "Loaded extrinsic: " << args.extrinsic_path << "\n";
 
@@ -696,6 +759,10 @@ int main(int argc, char **argv) {
       std::cout << "Config check passed.\n";
       return 0;
     }
+
+    const int n = PromptPointCount(all_world_points.points.size());
+    const WorldPoints world_points = TakeFirstNPoints(all_world_points, n);
+    std::cout << "Using first " << n << " points for evaluation.\n";
 
     HikCameraCapture camera;
     camera.Initialize(runtime_cfg);
@@ -713,6 +780,21 @@ int main(int argc, char **argv) {
           break;
         }
         continue;
+      }
+      static bool frame_size_checked = false;
+      if (!frame_size_checked) {
+        frame_size_checked = true;
+        if (intrinsic_size.IsValid()) {
+          if (frame.cols != intrinsic_size.width || frame.rows != intrinsic_size.height) {
+            throw std::runtime_error("Frame size (" + std::to_string(frame.cols) + "x" +
+                                     std::to_string(frame.rows) + ") does not match intrinsic size (" +
+                                     std::to_string(intrinsic_size.width) + "x" +
+                                     std::to_string(intrinsic_size.height) + ").");
+          }
+          std::cout << "Frame size check passed: " << frame.cols << "x" << frame.rows << "\n";
+        } else {
+          std::cout << "[WARN] image_width/image_height missing in camera params; skipped size check.\n";
+        }
       }
       if (!ui.HandleFrame(frame)) {
         break;
