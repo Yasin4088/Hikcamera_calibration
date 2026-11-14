@@ -12,6 +12,8 @@ dist_coeffs: !!opencv-matrix
    dt: d
    data: [ -0.18329606031314069, 0.21094294862132812, 0.000000, 0.000000,
        0.033842103557415855 ]
+image_width: 4024
+image_height: 3036
 hik_camera:
    camera_type: 1
    device_index: 0
@@ -19,7 +21,7 @@ hik_camera:
    camera_ip: ""
    pixel_format: "BayerBG8"
    acquisition_frame_rate: 120.
-   exposure_time: 10000.
+   exposure_time: 20000.
    gain: 12.
    trigger_mode: 0
    trigger_source: 2

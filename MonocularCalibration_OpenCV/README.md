@@ -38,6 +38,7 @@ cd /home/robot/Hikcamera_calibration/MonocularCalibration_OpenCV
 ### 1) 采集 BMP
 
 ```bash
+cd /home/robot/Hikcamera_calibration/MonocularCalibration_OpenCV
 ./run_collect.sh
 ```
 
@@ -58,6 +59,7 @@ CONFIG=/path/to/dart.yaml ./run_collect.sh
 ### 2) 离线框选与标定
 
 ```bash
+cd /home/robot/Hikcamera_calibration/MonocularCalibration_OpenCV
 ./run_calibration.sh
 ```
 

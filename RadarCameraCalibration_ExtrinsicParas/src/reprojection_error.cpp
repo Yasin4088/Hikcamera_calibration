@@ -186,6 +186,14 @@ std::string ParseValue(const std::string &line) {
   return value;
 }
 
+std::string StripCommentSuffix(const std::string &text) {
+  const auto pos = text.find('#');
+  if (pos == std::string::npos) {
+    return Trim(text);
+  }
+  return Trim(text.substr(0, pos));
+}
+
 WorldPoints LoadWorldPoints(const std::string &path) {
   std::ifstream ifs(path);
   if (!ifs.is_open()) {
@@ -214,10 +222,11 @@ WorldPoints LoadWorldPoints(const std::string &path) {
     if (!current.has_x || !current.has_y || !current.has_z) {
       throw std::runtime_error("world point missing x/y/z fields.");
     }
-    if (current.name.empty()) {
-      current.name = "point_" + std::to_string(point_idx);
+    std::string clean_name = StripCommentSuffix(current.name);
+    if (clean_name.empty()) {
+      clean_name = "point_" + std::to_string(point_idx);
     }
-    result.labels.push_back(current.name);
+    result.labels.push_back(clean_name);
     result.points.emplace_back(current.x, current.y, current.z);
     ++point_idx;
     current = TempPoint{};

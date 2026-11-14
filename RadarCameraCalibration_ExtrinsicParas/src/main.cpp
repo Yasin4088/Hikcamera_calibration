@@ -1,6 +1,7 @@
 #include <opencv2/opencv.hpp>
 
 #include <algorithm>
+#include <cmath>
 #include <cstdio>
 #include <cstring>
 #include <cstdint>
@@ -180,6 +181,14 @@ std::string ParseValue(const std::string &line) {
   return value;
 }
 
+std::string StripCommentSuffix(const std::string &text) {
+  const auto pos = text.find('#');
+  if (pos == std::string::npos) {
+    return Trim(text);
+  }
+  return Trim(text.substr(0, pos));
+}
+
 WorldPoints LoadWorldPoints(const std::string &path) {
   std::ifstream ifs(path);
   if (!ifs.is_open()) {
@@ -208,10 +217,11 @@ WorldPoints LoadWorldPoints(const std::string &path) {
     if (!current.has_x || !current.has_y || !current.has_z) {
       throw std::runtime_error("world point missing x/y/z fields.");
     }
-    if (current.name.empty()) {
-      current.name = "point_" + std::to_string(point_idx);
+    std::string clean_name = StripCommentSuffix(current.name);
+    if (clean_name.empty()) {
+      clean_name = "point_" + std::to_string(point_idx);
     }
-    result.labels.push_back(current.name);
+    result.labels.push_back(clean_name);
     result.points.emplace_back(current.x, current.y, current.z);
     ++point_idx;
     current = TempPoint{};
@@ -462,6 +472,38 @@ class HikCameraCapture {
   std::vector<unsigned char> convert_buffer_;
 };
 
+struct ReprojectionStats {
+  double mean = 0.0;
+  double rms = 0.0;
+  double max = 0.0;
+};
+
+ReprojectionStats ComputeReprojectionStats(const std::vector<cv::Point3f> &object_points,
+                                             const std::vector<cv::Point2f> &image_points,
+                                             const cv::Mat &rvec, const cv::Mat &tvec,
+                                             const cv::Mat &camera_matrix, const cv::Mat &dist_coeffs) {
+  if (object_points.size() != image_points.size() || object_points.empty()) {
+    throw std::runtime_error("Reprojection error requires matched non-empty point sets.");
+  }
+  std::vector<cv::Point2f> projected;
+  cv::projectPoints(object_points, rvec, tvec, camera_matrix, dist_coeffs, projected);
+
+  ReprojectionStats stats;
+  double sum = 0.0;
+  double sum_sq = 0.0;
+  for (std::size_t i = 0; i < image_points.size(); ++i) {
+    const cv::Point2f diff = image_points[i] - projected[i];
+    const double err = std::sqrt(diff.x * diff.x + diff.y * diff.y);
+    sum += err;
+    sum_sq += err * err;
+    stats.max = std::max(stats.max, err);
+  }
+  const double n = static_cast<double>(image_points.size());
+  stats.mean = sum / n;
+  stats.rms = std::sqrt(sum_sq / n);
+  return stats;
+}
+
 class CalibrationUi {
  public:
   CalibrationUi(const cv::Mat &camera_matrix, const cv::Mat &dist_coeffs, WorldPoints world_points,
@@ -620,28 +662,20 @@ class CalibrationUi {
   void SolveAndSave() {
     cv::Mat rvec;
     cv::Mat tvec;
-    cv::Mat inliers;
-    const bool ok = cv::solvePnPRansac(world_points_.points, image_points_, camera_matrix_, dist_coeffs_, rvec,
-                                       tvec, false, 200, 4.0, 0.99, inliers, cv::SOLVEPNP_EPNP);
-    if (!ok || inliers.rows < 4) {
-      throw std::runtime_error("solvePnPRansac failed or inliers < 4.");
+    const bool ok_init = cv::solvePnP(world_points_.points, image_points_, camera_matrix_, dist_coeffs_,
+                                      rvec, tvec, false, cv::SOLVEPNP_EPNP);
+    if (!ok_init || rvec.empty() || tvec.empty()) {
+      throw std::runtime_error("solvePnP(EPNP) failed.");
     }
 
-    std::vector<cv::Point3f> inlier_world_points;
-    std::vector<cv::Point2f> inlier_image_points;
-    inlier_world_points.reserve(static_cast<std::size_t>(inliers.rows));
-    inlier_image_points.reserve(static_cast<std::size_t>(inliers.rows));
-    for (int i = 0; i < inliers.rows; ++i) {
-      const int idx = inliers.at<int>(i, 0);
-      inlier_world_points.push_back(world_points_.points[static_cast<std::size_t>(idx)]);
-      inlier_image_points.push_back(image_points_[static_cast<std::size_t>(idx)]);
+    const bool ok_refine = cv::solvePnP(world_points_.points, image_points_, camera_matrix_, dist_coeffs_,
+                                        rvec, tvec, true, cv::SOLVEPNP_ITERATIVE);
+    if (!ok_refine || rvec.empty() || tvec.empty()) {
+      throw std::runtime_error("solvePnP refinement (ITERATIVE) failed.");
     }
 
-    const bool refine_ok = cv::solvePnP(inlier_world_points, inlier_image_points, camera_matrix_,
-                                        dist_coeffs_, rvec, tvec, true, cv::SOLVEPNP_ITERATIVE);
-    if (!refine_ok) {
-      throw std::runtime_error("solvePnP iterative refinement failed.");
-    }
+    const ReprojectionStats reproj = ComputeReprojectionStats(
+        world_points_.points, image_points_, rvec, tvec, camera_matrix_, dist_coeffs_);
 
     cv::FileStorage fs(output_path_, cv::FileStorage::WRITE);
     if (!fs.isOpened()) {
@@ -649,10 +683,14 @@ class CalibrationUi {
     }
     fs << "world_rvec" << rvec;
     fs << "world_tvec" << tvec;
+    fs << "mean_error" << reproj.mean;
+    fs << "rms_error" << reproj.rms;
+    fs << "max_error" << reproj.max;
     fs.release();
 
     std::cout << "Calibration complete.\n";
-    std::cout << "Inliers: " << inliers.rows << "/" << world_points_.points.size() << "\n";
+    std::cout << "Reprojection error: mean=" << reproj.mean << " px, rms=" << reproj.rms
+              << " px, max=" << reproj.max << " px\n";
     std::cout << "rvec:\n" << rvec << "\n";
     std::cout << "tvec:\n" << tvec << "\n";
     std::cout << "Saved to: " << output_path_ << "\n";
@@ -690,7 +728,8 @@ int main(int argc, char **argv) {
     cv::Mat dist_coeffs;
     RuntimeCameraConfig runtime_cfg;
     IntrinsicImageSize intrinsic_size;
-    LoadCameraConfig(args.camera_params_path, &camera_matrix, &dist_coeffs, &runtime_cfg, &intrinsic_size);
+    LoadCameraConfig(args.camera_params_path, &camera_matrix, &dist_coeffs, &runtime_cfg,
+                     &intrinsic_size);
     const WorldPoints all_world_points = LoadWorldPoints(args.world_points_path);
 
     std::cout << "Loaded camera params from: " << args.camera_params_path << "\n";
@@ -735,7 +774,8 @@ int main(int argc, char **argv) {
         if (intrinsic_size.IsValid()) {
           if (frame.cols != intrinsic_size.width || frame.rows != intrinsic_size.height) {
             throw std::runtime_error("Frame size (" + std::to_string(frame.cols) + "x" +
-                                     std::to_string(frame.rows) + ") does not match intrinsic size (" +
+                                     std::to_string(frame.rows) +
+                                     ") does not match intrinsic size (" +
                                      std::to_string(intrinsic_size.width) + "x" +
                                      std::to_string(intrinsic_size.height) + ").");
           }

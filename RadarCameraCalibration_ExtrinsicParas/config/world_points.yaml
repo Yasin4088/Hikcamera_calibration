@@ -1,33 +1,45 @@
+# rectangle:
+#   - name: length
+#     small: 2.120
+#     large: 2.440
+#   - name: width
+#     standard: 1.220
+
+# x, y, z in meters
 points:
-  - name: point_1
-    x: 3.560
+  - name: point_1 #堡垒靠近相机一侧的角点
+    x: 3.500
     y: 2.650
     z: 0.0
-  - name: point_2
+  - name: point_2 #飞坡右边缘上角点
     x: 5.790
     y: 4.260
-    z: 0.44
-  - name: point_3
-    x: 4.810
-    y: 6.300
+    z: 0.450
+  - name: point_3 #基地滑道角点（每次基地移动后需重测）
+    x: 6.220
+    y: 6.030
     z: 1.270
-  - name: point_4
-    x: 2.005
+  - name: point_4 #中心基地高地右角点
+    x: 2.000
     y: 6.980
     z: 0.30
-  - name: point_5
-    x: 4.990
+  - name: point_5 #中心基地外侧高地左角点
+    x: 4.980
     y: 8.235
     z: 0.350
-  - name: point_6
+  - name: point_6 #中心基地坡道入口左角点
     x: 1.410
     y: 5.840
     z: 0.0
-  - name: point_7
+  - name: point_7 #隧道右角点
     x: 0.100
     y: 8.370
     z: 0.60
-  - name: point_8
-    x: 2.10
+  - name: point_8 #矿石左上角（待改）
+    x: 2.20
     y: 7.20
     z: 0.50
+  - name: point_9 #门口右上角
+    x: 5.72
+    y: 12.22
+    z: 2.30
