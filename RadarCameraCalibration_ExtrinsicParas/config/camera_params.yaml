@@ -21,7 +21,7 @@ hik_camera:
    camera_ip: ""
    pixel_format: "BayerBG8"
    acquisition_frame_rate: 120.
-   exposure_time: 20000.
+   exposure_time: 30000.
    gain: 12.
    trigger_mode: 0
    trigger_source: 2
