@@ -50,7 +50,7 @@ fast_calib:
     # Input
     lidar_topic: "/livox/lidar" # /ouster/points /livox/lidar
     bag_path: "/home/robot/Hikcamera_calibration/FAST-Calib-ROS2/calib_data/mid360_11"
-    image_path: "/home/robot/Hikcamera_calibration/calib_data/mid360_11/11.png"
+    image_path: "/home/robot/Hikcamera_calibration/FAST-Calib-ROS2/calib_data/mid360_11/11.png"
 
     # Output
     output_path: "/home/robot/Hikcamera_calibration/FAST-Calib-ROS2/output"
