@@ -13,7 +13,14 @@ find_package(pcl_conversions REQUIRED)
 find_package(rosbag2_cpp REQUIRED)
 
 find_package(PCL 1.10 REQUIRED)
-find_package(OpenCV REQUIRED)
+
+# On this machine, a /usr/local OpenCV can be discovered first and miss ArUco headers.
+# Prefer Ubuntu's packaged OpenCV when available, while still allowing manual override.
+if(NOT DEFINED OpenCV_DIR AND EXISTS "/usr/lib/x86_64-linux-gnu/cmake/opencv4")
+  set(OpenCV_DIR "/usr/lib/x86_64-linux-gnu/cmake/opencv4")
+endif()
+
+find_package(OpenCV REQUIRED COMPONENTS core imgproc highgui calib3d aruco)
 
 # Include directories
 include_directories(
