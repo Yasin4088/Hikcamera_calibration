@@ -1,0 +1,14 @@
+/livox_lidar:
+  ros__parameters:
+    # 雷达网络参数，按现场网络修改
+    local_ip: "192.168.10.50"
+    dest_ip: "192.168.10.30"
+    udp_port: 50010
+    # 收包批量点数
+    batch_dot_num: 9600
+    # 收包超时，单位: ms
+    timeout_ms: 1000
+
+/mid70_driver_launch:
+  ros__parameters:
+    enable_lidar: true
