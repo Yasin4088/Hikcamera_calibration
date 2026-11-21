@@ -32,12 +32,12 @@ fast_calib:
     # p2: -0.000201478932371979
 
     # Calibration target parameters
-    marker_size: 0.20 # ArUco marker size (our test data uses 0.16m; adjust to match your marker size)
-    delta_width_qr_center: 0.55 # Half the distance between the centers of two markers in the horizontal direction 
-    delta_height_qr_center: 0.35 # Half the distance between the centers of two markers in the vertical direction
-    delta_width_circles: 0.5 # Distance between the centers of two circles in the horizontal direction
-    delta_height_circles: 0.4 # Distance between the centers of two circles in the vertical direction
-    circle_radius: 0.12 # Radius of the circle 
+    marker_size: 0.20 # ArUco marker size (200 mm)
+    delta_width_qr_center: 0.55 # Half the distance between QR centers (keep default; adjust with exact drawing if needed)
+    delta_height_qr_center: 0.35 # Half the distance between QR centers (keep default; adjust with exact drawing if needed)
+    delta_width_circles: 0.5 # Distance between circle centers (500 mm)
+    delta_height_circles: 0.4 # Distance between circle centers (400 mm)
+    circle_radius: 0.095 # New board inner circle radius (190 mm / 2). If detecting outer ring, try 0.145
 
     # Distance filter
     x_min: 1.5
@@ -48,9 +48,9 @@ fast_calib:
     z_max: 2.0
 
     # Input
-    lidar_topic: "/livox/lidar" # /ouster/points /livox/lidar
-    bag_path: "/home/robot/Hikcamera_calibration/FAST-Calib-ROS2/calib_data/mid360_11"
-    image_path: "/home/robot/Hikcamera_calibration/FAST-Calib-ROS2/calib_data/mid360_11/11.png"
+    lidar_topic: "/pc_raw" # /ouster/points /livox/lidar
+    bag_path: "/home/robot/Hikcamera_calibration/FAST-Calib-ROS2/calib_data/mid-70"
+    image_path: "/home/robot/Hikcamera_calibration/FAST-Calib-ROS2/calib_data/mid-70/Image_01.jpg"
 
     # Output
     output_path: "/home/robot/Hikcamera_calibration/FAST-Calib-ROS2/output"
