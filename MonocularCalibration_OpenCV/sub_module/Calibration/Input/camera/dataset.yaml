@@ -1,0 +1,853 @@
+%YAML:1.0
+---
+schema_version: 1
+camera_side: mono
+image_width: 4024
+image_height: 3036
+config_source: "/home/robot/Hikcamera_calibration/MonocularCalibration_OpenCV/config/dart.yaml"
+timestamp_convention: host_receive_ms
+frames:
+   -
+      file: "000001.bmp"
+      frame_id: "0"
+      timestamp_ms: "480574"
+   -
+      file: "000002.bmp"
+      frame_id: "30"
+      timestamp_ms: "481599"
+   -
+      file: "000003.bmp"
+      frame_id: "60"
+      timestamp_ms: "482625"
+   -
+      file: "000004.bmp"
+      frame_id: "90"
+      timestamp_ms: "483650"
+   -
+      file: "000005.bmp"
+      frame_id: "119"
+      timestamp_ms: "484641"
+   -
+      file: "000006.bmp"
+      frame_id: "149"
+      timestamp_ms: "485666"
+   -
+      file: "000007.bmp"
+      frame_id: "179"
+      timestamp_ms: "486692"
+   -
+      file: "000008.bmp"
+      frame_id: "209"
+      timestamp_ms: "487717"
+   -
+      file: "000009.bmp"
+      frame_id: "239"
+      timestamp_ms: "488742"
+   -
+      file: "000010.bmp"
+      frame_id: "269"
+      timestamp_ms: "489767"
+   -
+      file: "000011.bmp"
+      frame_id: "299"
+      timestamp_ms: "490793"
+   -
+      file: "000012.bmp"
+      frame_id: "329"
+      timestamp_ms: "491818"
+   -
+      file: "000013.bmp"
+      frame_id: "359"
+      timestamp_ms: "492843"
+   -
+      file: "000014.bmp"
+      frame_id: "389"
+      timestamp_ms: "493869"
+   -
+      file: "000015.bmp"
+      frame_id: "419"
+      timestamp_ms: "494894"
+   -
+      file: "000016.bmp"
+      frame_id: "449"
+      timestamp_ms: "495919"
+   -
+      file: "000017.bmp"
+      frame_id: "479"
+      timestamp_ms: "496944"
+   -
+      file: "000018.bmp"
+      frame_id: "509"
+      timestamp_ms: "497969"
+   -
+      file: "000019.bmp"
+      frame_id: "539"
+      timestamp_ms: "498995"
+   -
+      file: "000020.bmp"
+      frame_id: "569"
+      timestamp_ms: "500020"
+   -
+      file: "000021.bmp"
+      frame_id: "599"
+      timestamp_ms: "501045"
+   -
+      file: "000022.bmp"
+      frame_id: "629"
+      timestamp_ms: "502071"
+   -
+      file: "000023.bmp"
+      frame_id: "659"
+      timestamp_ms: "503096"
+   -
+      file: "000024.bmp"
+      frame_id: "689"
+      timestamp_ms: "504121"
+   -
+      file: "000025.bmp"
+      frame_id: "719"
+      timestamp_ms: "505147"
+   -
+      file: "000026.bmp"
+      frame_id: "749"
+      timestamp_ms: "506172"
+   -
+      file: "000027.bmp"
+      frame_id: "779"
+      timestamp_ms: "507197"
+   -
+      file: "000028.bmp"
+      frame_id: "809"
+      timestamp_ms: "508222"
+   -
+      file: "000029.bmp"
+      frame_id: "839"
+      timestamp_ms: "509248"
+   -
+      file: "000030.bmp"
+      frame_id: "869"
+      timestamp_ms: "510273"
+   -
+      file: "000031.bmp"
+      frame_id: "899"
+      timestamp_ms: "511298"
+   -
+      file: "000032.bmp"
+      frame_id: "928"
+      timestamp_ms: "512289"
+   -
+      file: "000033.bmp"
+      frame_id: "958"
+      timestamp_ms: "513314"
+   -
+      file: "000034.bmp"
+      frame_id: "988"
+      timestamp_ms: "514340"
+   -
+      file: "000035.bmp"
+      frame_id: "1018"
+      timestamp_ms: "515365"
+   -
+      file: "000036.bmp"
+      frame_id: "1048"
+      timestamp_ms: "516390"
+   -
+      file: "000037.bmp"
+      frame_id: "1078"
+      timestamp_ms: "517416"
+   -
+      file: "000038.bmp"
+      frame_id: "1108"
+      timestamp_ms: "518441"
+   -
+      file: "000039.bmp"
+      frame_id: "1138"
+      timestamp_ms: "519466"
+   -
+      file: "000040.bmp"
+      frame_id: "1168"
+      timestamp_ms: "520491"
+   -
+      file: "000041.bmp"
+      frame_id: "1198"
+      timestamp_ms: "521517"
+   -
+      file: "000042.bmp"
+      frame_id: "1228"
+      timestamp_ms: "522542"
+   -
+      file: "000043.bmp"
+      frame_id: "1258"
+      timestamp_ms: "523567"
+   -
+      file: "000044.bmp"
+      frame_id: "1287"
+      timestamp_ms: "524558"
+   -
+      file: "000045.bmp"
+      frame_id: "1317"
+      timestamp_ms: "525584"
+   -
+      file: "000046.bmp"
+      frame_id: "1347"
+      timestamp_ms: "526609"
+   -
+      file: "000047.bmp"
+      frame_id: "1377"
+      timestamp_ms: "527634"
+   -
+      file: "000048.bmp"
+      frame_id: "1407"
+      timestamp_ms: "528659"
+   -
+      file: "000049.bmp"
+      frame_id: "1437"
+      timestamp_ms: "529685"
+   -
+      file: "000050.bmp"
+      frame_id: "1467"
+      timestamp_ms: "530710"
+   -
+      file: "000051.bmp"
+      frame_id: "1497"
+      timestamp_ms: "531735"
+   -
+      file: "000052.bmp"
+      frame_id: "1527"
+      timestamp_ms: "532761"
+   -
+      file: "000053.bmp"
+      frame_id: "1557"
+      timestamp_ms: "533786"
+   -
+      file: "000054.bmp"
+      frame_id: "1587"
+      timestamp_ms: "534811"
+   -
+      file: "000055.bmp"
+      frame_id: "1617"
+      timestamp_ms: "535836"
+   -
+      file: "000056.bmp"
+      frame_id: "1647"
+      timestamp_ms: "536862"
+   -
+      file: "000057.bmp"
+      frame_id: "1677"
+      timestamp_ms: "537887"
+   -
+      file: "000058.bmp"
+      frame_id: "1707"
+      timestamp_ms: "538912"
+   -
+      file: "000059.bmp"
+      frame_id: "1737"
+      timestamp_ms: "539937"
+   -
+      file: "000060.bmp"
+      frame_id: "1767"
+      timestamp_ms: "540963"
+   -
+      file: "000061.bmp"
+      frame_id: "1797"
+      timestamp_ms: "541989"
+   -
+      file: "000062.bmp"
+      frame_id: "1827"
+      timestamp_ms: "543013"
+   -
+      file: "000063.bmp"
+      frame_id: "1857"
+      timestamp_ms: "544038"
+   -
+      file: "000064.bmp"
+      frame_id: "1887"
+      timestamp_ms: "545064"
+   -
+      file: "000065.bmp"
+      frame_id: "1917"
+      timestamp_ms: "546089"
+   -
+      file: "000066.bmp"
+      frame_id: "1947"
+      timestamp_ms: "547114"
+   -
+      file: "000067.bmp"
+      frame_id: "1977"
+      timestamp_ms: "548140"
+   -
+      file: "000068.bmp"
+      frame_id: "2007"
+      timestamp_ms: "549165"
+   -
+      file: "000069.bmp"
+      frame_id: "2037"
+      timestamp_ms: "550190"
+   -
+      file: "000070.bmp"
+      frame_id: "2067"
+      timestamp_ms: "551215"
+   -
+      file: "000071.bmp"
+      frame_id: "2097"
+      timestamp_ms: "552241"
+   -
+      file: "000072.bmp"
+      frame_id: "2127"
+      timestamp_ms: "553266"
+   -
+      file: "000073.bmp"
+      frame_id: "2157"
+      timestamp_ms: "554291"
+   -
+      file: "000074.bmp"
+      frame_id: "2187"
+      timestamp_ms: "555316"
+   -
+      file: "000075.bmp"
+      frame_id: "2217"
+      timestamp_ms: "556342"
+   -
+      file: "000076.bmp"
+      frame_id: "2247"
+      timestamp_ms: "557367"
+   -
+      file: "000077.bmp"
+      frame_id: "2276"
+      timestamp_ms: "558358"
+   -
+      file: "000078.bmp"
+      frame_id: "2306"
+      timestamp_ms: "559383"
+   -
+      file: "000079.bmp"
+      frame_id: "2336"
+      timestamp_ms: "560409"
+   -
+      file: "000080.bmp"
+      frame_id: "2366"
+      timestamp_ms: "561434"
+   -
+      file: "000081.bmp"
+      frame_id: "2396"
+      timestamp_ms: "562459"
+   -
+      file: "000082.bmp"
+      frame_id: "2426"
+      timestamp_ms: "563484"
+   -
+      file: "000083.bmp"
+      frame_id: "2456"
+      timestamp_ms: "564510"
+   -
+      file: "000084.bmp"
+      frame_id: "2486"
+      timestamp_ms: "565535"
+   -
+      file: "000085.bmp"
+      frame_id: "2516"
+      timestamp_ms: "566560"
+   -
+      file: "000086.bmp"
+      frame_id: "2546"
+      timestamp_ms: "567586"
+   -
+      file: "000087.bmp"
+      frame_id: "2576"
+      timestamp_ms: "568611"
+   -
+      file: "000088.bmp"
+      frame_id: "2606"
+      timestamp_ms: "569637"
+   -
+      file: "000089.bmp"
+      frame_id: "2636"
+      timestamp_ms: "570661"
+   -
+      file: "000090.bmp"
+      frame_id: "2666"
+      timestamp_ms: "571686"
+   -
+      file: "000091.bmp"
+      frame_id: "2696"
+      timestamp_ms: "572712"
+   -
+      file: "000092.bmp"
+      frame_id: "2726"
+      timestamp_ms: "573737"
+   -
+      file: "000093.bmp"
+      frame_id: "2756"
+      timestamp_ms: "574763"
+   -
+      file: "000094.bmp"
+      frame_id: "2786"
+      timestamp_ms: "575788"
+   -
+      file: "000095.bmp"
+      frame_id: "2816"
+      timestamp_ms: "576813"
+   -
+      file: "000096.bmp"
+      frame_id: "2846"
+      timestamp_ms: "577838"
+   -
+      file: "000097.bmp"
+      frame_id: "2876"
+      timestamp_ms: "578863"
+   -
+      file: "000098.bmp"
+      frame_id: "2906"
+      timestamp_ms: "579889"
+   -
+      file: "000099.bmp"
+      frame_id: "2936"
+      timestamp_ms: "580914"
+   -
+      file: "000100.bmp"
+      frame_id: "2966"
+      timestamp_ms: "581939"
+   -
+      file: "000101.bmp"
+      frame_id: "2996"
+      timestamp_ms: "582964"
+   -
+      file: "000102.bmp"
+      frame_id: "3026"
+      timestamp_ms: "583990"
+   -
+      file: "000103.bmp"
+      frame_id: "3056"
+      timestamp_ms: "585015"
+   -
+      file: "000104.bmp"
+      frame_id: "3086"
+      timestamp_ms: "586040"
+   -
+      file: "000105.bmp"
+      frame_id: "3116"
+      timestamp_ms: "587066"
+   -
+      file: "000106.bmp"
+      frame_id: "3146"
+      timestamp_ms: "588091"
+   -
+      file: "000107.bmp"
+      frame_id: "3176"
+      timestamp_ms: "589116"
+   -
+      file: "000108.bmp"
+      frame_id: "3206"
+      timestamp_ms: "590142"
+   -
+      file: "000109.bmp"
+      frame_id: "3235"
+      timestamp_ms: "591133"
+   -
+      file: "000110.bmp"
+      frame_id: "3265"
+      timestamp_ms: "592158"
+   -
+      file: "000111.bmp"
+      frame_id: "3295"
+      timestamp_ms: "593183"
+   -
+      file: "000112.bmp"
+      frame_id: "3325"
+      timestamp_ms: "594209"
+   -
+      file: "000113.bmp"
+      frame_id: "3355"
+      timestamp_ms: "595234"
+   -
+      file: "000114.bmp"
+      frame_id: "3385"
+      timestamp_ms: "596259"
+   -
+      file: "000115.bmp"
+      frame_id: "3415"
+      timestamp_ms: "597285"
+   -
+      file: "000116.bmp"
+      frame_id: "3444"
+      timestamp_ms: "598276"
+   -
+      file: "000117.bmp"
+      frame_id: "3474"
+      timestamp_ms: "599301"
+   -
+      file: "000118.bmp"
+      frame_id: "3504"
+      timestamp_ms: "600327"
+   -
+      file: "000119.bmp"
+      frame_id: "3534"
+      timestamp_ms: "601352"
+   -
+      file: "000120.bmp"
+      frame_id: "3564"
+      timestamp_ms: "602377"
+   -
+      file: "000121.bmp"
+      frame_id: "3593"
+      timestamp_ms: "603369"
+   -
+      file: "000122.bmp"
+      frame_id: "3623"
+      timestamp_ms: "604394"
+   -
+      file: "000123.bmp"
+      frame_id: "3653"
+      timestamp_ms: "605419"
+   -
+      file: "000124.bmp"
+      frame_id: "3683"
+      timestamp_ms: "606445"
+   -
+      file: "000125.bmp"
+      frame_id: "3713"
+      timestamp_ms: "607470"
+   -
+      file: "000126.bmp"
+      frame_id: "3743"
+      timestamp_ms: "608495"
+   -
+      file: "000127.bmp"
+      frame_id: "3773"
+      timestamp_ms: "609521"
+   -
+      file: "000128.bmp"
+      frame_id: "3803"
+      timestamp_ms: "610546"
+   -
+      file: "000129.bmp"
+      frame_id: "3833"
+      timestamp_ms: "611572"
+   -
+      file: "000130.bmp"
+      frame_id: "3863"
+      timestamp_ms: "612597"
+   -
+      file: "000131.bmp"
+      frame_id: "3893"
+      timestamp_ms: "613622"
+   -
+      file: "000132.bmp"
+      frame_id: "3923"
+      timestamp_ms: "614648"
+   -
+      file: "000133.bmp"
+      frame_id: "3953"
+      timestamp_ms: "615673"
+   -
+      file: "000134.bmp"
+      frame_id: "3982"
+      timestamp_ms: "616664"
+   -
+      file: "000135.bmp"
+      frame_id: "4012"
+      timestamp_ms: "617690"
+   -
+      file: "000136.bmp"
+      frame_id: "4042"
+      timestamp_ms: "618715"
+   -
+      file: "000137.bmp"
+      frame_id: "4072"
+      timestamp_ms: "619740"
+   -
+      file: "000138.bmp"
+      frame_id: "4101"
+      timestamp_ms: "620731"
+   -
+      file: "000139.bmp"
+      frame_id: "4131"
+      timestamp_ms: "621757"
+   -
+      file: "000140.bmp"
+      frame_id: "4161"
+      timestamp_ms: "622782"
+   -
+      file: "000141.bmp"
+      frame_id: "4191"
+      timestamp_ms: "623807"
+   -
+      file: "000142.bmp"
+      frame_id: "4221"
+      timestamp_ms: "624833"
+   -
+      file: "000143.bmp"
+      frame_id: "4251"
+      timestamp_ms: "625858"
+   -
+      file: "000144.bmp"
+      frame_id: "4281"
+      timestamp_ms: "626883"
+   -
+      file: "000145.bmp"
+      frame_id: "4311"
+      timestamp_ms: "627909"
+   -
+      file: "000146.bmp"
+      frame_id: "4341"
+      timestamp_ms: "628934"
+   -
+      file: "000147.bmp"
+      frame_id: "4371"
+      timestamp_ms: "629960"
+   -
+      file: "000148.bmp"
+      frame_id: "4401"
+      timestamp_ms: "630985"
+   -
+      file: "000149.bmp"
+      frame_id: "4431"
+      timestamp_ms: "632010"
+   -
+      file: "000150.bmp"
+      frame_id: "4460"
+      timestamp_ms: "633002"
+   -
+      file: "000151.bmp"
+      frame_id: "4490"
+      timestamp_ms: "634027"
+   -
+      file: "000152.bmp"
+      frame_id: "4520"
+      timestamp_ms: "635052"
+   -
+      file: "000153.bmp"
+      frame_id: "4550"
+      timestamp_ms: "636078"
+   -
+      file: "000154.bmp"
+      frame_id: "4580"
+      timestamp_ms: "637103"
+   -
+      file: "000155.bmp"
+      frame_id: "4610"
+      timestamp_ms: "638128"
+   -
+      file: "000156.bmp"
+      frame_id: "4640"
+      timestamp_ms: "639153"
+   -
+      file: "000157.bmp"
+      frame_id: "4670"
+      timestamp_ms: "640179"
+   -
+      file: "000158.bmp"
+      frame_id: "4700"
+      timestamp_ms: "641204"
+   -
+      file: "000159.bmp"
+      frame_id: "4730"
+      timestamp_ms: "642230"
+   -
+      file: "000160.bmp"
+      frame_id: "4760"
+      timestamp_ms: "643255"
+   -
+      file: "000161.bmp"
+      frame_id: "4790"
+      timestamp_ms: "644280"
+   -
+      file: "000162.bmp"
+      frame_id: "4820"
+      timestamp_ms: "645306"
+   -
+      file: "000163.bmp"
+      frame_id: "4850"
+      timestamp_ms: "646331"
+   -
+      file: "000164.bmp"
+      frame_id: "4880"
+      timestamp_ms: "647357"
+   -
+      file: "000165.bmp"
+      frame_id: "4910"
+      timestamp_ms: "648382"
+   -
+      file: "000166.bmp"
+      frame_id: "4940"
+      timestamp_ms: "649407"
+   -
+      file: "000167.bmp"
+      frame_id: "4970"
+      timestamp_ms: "650432"
+   -
+      file: "000168.bmp"
+      frame_id: "5000"
+      timestamp_ms: "651458"
+   -
+      file: "000169.bmp"
+      frame_id: "5030"
+      timestamp_ms: "652483"
+   -
+      file: "000170.bmp"
+      frame_id: "5060"
+      timestamp_ms: "653509"
+   -
+      file: "000171.bmp"
+      frame_id: "5090"
+      timestamp_ms: "654534"
+   -
+      file: "000172.bmp"
+      frame_id: "5119"
+      timestamp_ms: "655525"
+   -
+      file: "000173.bmp"
+      frame_id: "5149"
+      timestamp_ms: "656550"
+   -
+      file: "000174.bmp"
+      frame_id: "5179"
+      timestamp_ms: "657576"
+   -
+      file: "000175.bmp"
+      frame_id: "5209"
+      timestamp_ms: "658601"
+   -
+      file: "000176.bmp"
+      frame_id: "5238"
+      timestamp_ms: "659592"
+   -
+      file: "000177.bmp"
+      frame_id: "5268"
+      timestamp_ms: "660617"
+   -
+      file: "000178.bmp"
+      frame_id: "5298"
+      timestamp_ms: "661643"
+   -
+      file: "000179.bmp"
+      frame_id: "5328"
+      timestamp_ms: "662668"
+   -
+      file: "000180.bmp"
+      frame_id: "5358"
+      timestamp_ms: "663693"
+   -
+      file: "000181.bmp"
+      frame_id: "5388"
+      timestamp_ms: "664719"
+   -
+      file: "000182.bmp"
+      frame_id: "5418"
+      timestamp_ms: "665744"
+   -
+      file: "000183.bmp"
+      frame_id: "5448"
+      timestamp_ms: "666770"
+   -
+      file: "000184.bmp"
+      frame_id: "5478"
+      timestamp_ms: "667795"
+   -
+      file: "000185.bmp"
+      frame_id: "5508"
+      timestamp_ms: "668820"
+   -
+      file: "000186.bmp"
+      frame_id: "5538"
+      timestamp_ms: "669846"
+   -
+      file: "000187.bmp"
+      frame_id: "5568"
+      timestamp_ms: "670871"
+   -
+      file: "000188.bmp"
+      frame_id: "5597"
+      timestamp_ms: "671862"
+   -
+      file: "000189.bmp"
+      frame_id: "5627"
+      timestamp_ms: "672887"
+   -
+      file: "000190.bmp"
+      frame_id: "5657"
+      timestamp_ms: "673913"
+   -
+      file: "000191.bmp"
+      frame_id: "5687"
+      timestamp_ms: "674938"
+   -
+      file: "000192.bmp"
+      frame_id: "5716"
+      timestamp_ms: "675929"
+   -
+      file: "000193.bmp"
+      frame_id: "5746"
+      timestamp_ms: "676955"
+   -
+      file: "000194.bmp"
+      frame_id: "5775"
+      timestamp_ms: "677946"
+   -
+      file: "000195.bmp"
+      frame_id: "5805"
+      timestamp_ms: "678971"
+   -
+      file: "000196.bmp"
+      frame_id: "5835"
+      timestamp_ms: "679996"
+   -
+      file: "000197.bmp"
+      frame_id: "5865"
+      timestamp_ms: "681022"
+   -
+      file: "000198.bmp"
+      frame_id: "5895"
+      timestamp_ms: "682047"
+   -
+      file: "000199.bmp"
+      frame_id: "5925"
+      timestamp_ms: "683072"
+   -
+      file: "000200.bmp"
+      frame_id: "5955"
+      timestamp_ms: "684098"
+   -
+      file: "000201.bmp"
+      frame_id: "5985"
+      timestamp_ms: "685123"
+   -
+      file: "000202.bmp"
+      frame_id: "6014"
+      timestamp_ms: "686114"
+   -
+      file: "000203.bmp"
+      frame_id: "6044"
+      timestamp_ms: "687139"
+   -
+      file: "000204.bmp"
+      frame_id: "6074"
+      timestamp_ms: "688165"
+   -
+      file: "000205.bmp"
+      frame_id: "6104"
+      timestamp_ms: "689190"
+   -
+      file: "000206.bmp"
+      frame_id: "6134"
+      timestamp_ms: "690216"
+   -
+      file: "000207.bmp"
+      frame_id: "6164"
+      timestamp_ms: "691241"
+   -
+      file: "000208.bmp"
+      frame_id: "6194"
+      timestamp_ms: "692266"
+   -
+      file: "000209.bmp"
+      frame_id: "6223"
+      timestamp_ms: "693257"
+   -
+      file: "000210.bmp"
+      frame_id: "6253"
+      timestamp_ms: "694283"
+   -
+      file: "000211.bmp"
+      frame_id: "6283"
+      timestamp_ms: "695308"
