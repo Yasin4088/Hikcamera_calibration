@@ -9,6 +9,7 @@
 - `config/mid70_default.yaml`: 与感知模块一致的驱动参数
 - `launch/mid70_driver_launch.py`: 仅启动 Mid-70 驱动
 - `record.sh`: ROS2 录包脚本
+- `visualize.sh`: 一键播放 bag 并打开 RViz 点云可视化
 
 ## 编译
 
@@ -40,3 +41,26 @@ source install/setup.bash
 ```bash
 ./record.sh mid70_test /pc_raw /livox_lidar/diagnostics
 ```
+
+## 可视化
+
+### 一键可视化最近的包
+
+```bash
+cd /home/robot/Hikcamera_calibration/Mid-70_driver
+./visualize.sh
+```
+
+### 可视化指定 bag
+
+```bash
+./visualize.sh mid70_fix_20261121_113639
+```
+
+### 只打开 RViz（实时模式）
+
+```bash
+./visualize.sh --live
+```
+
+`visualize.sh` 会加载预设配置 `rviz/mid70_pointcloud.rviz`，默认显示 `/pc_raw` 点云并固定在 `livox_lidar_frame`。

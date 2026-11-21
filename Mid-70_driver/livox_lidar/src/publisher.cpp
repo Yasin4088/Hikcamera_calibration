@@ -66,7 +66,11 @@ void LidarPublisher::heartbeat_spin()
         boost::asio::ip::udp::endpoint(dest_ip, protocal::dest_port));
 
       socket->send_to(
-        buffer(protocal::start_data, sizeof(protocal::start_data)),
+        buffer(buf, protocal::write_frame_buffer(
+                      buf.data(),
+                      protocal::start_data,
+                      sizeof(protocal::start_data),
+                      buf.size())),
         boost::asio::ip::udp::endpoint(dest_ip, protocal::dest_port));
       need_reconnect = false;
     }
