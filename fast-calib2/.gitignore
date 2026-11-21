@@ -1,0 +1,5 @@
+calib_data/*
+output/*
+build/*
+install/*
+log

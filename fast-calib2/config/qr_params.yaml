@@ -1,0 +1,56 @@
+# Camera intrinsics
+# Resolution used when calibrating the active intrinsics below.
+camera_width: 4024
+camera_height: 3036
+
+fx: 3258.0235338100692
+fy: 3258.0235338100692
+cx: 2001.8720022379359
+cy: 1550.2093147585877
+k1: -0.16938767513087169
+k2: 0.14338144698893149
+p1: 0.0
+p2: 0.0
+
+# Calibration target parameters
+marker_size: 0.20 # ArUco marker side length; adjust to match your physical target
+delta_width_qr_center: 0.55 # Half the distance between the centers of two markers in the horizontal direction
+delta_height_qr_center: 0.35 # Half the distance between the centers of two markers in the vertical direction
+delta_width_circles: 0.5 # Distance between the centers of two annuli in the horizontal direction
+delta_height_circles: 0.4 # Distance between the centers of two annuli in the vertical direction
+circle_radius: 0.12 # Radius of the reflective annulus centerline
+annulus_half_width: 0.025 # Half width of annulus band: (outer radius - inner radius) / 2
+board_width: 1.4
+board_height: 1.0
+board_roi_margin: 0.08
+board_roi_depth: 0.12
+auto_roi_voxel_leaf: 0.01
+annulus_voxel_leaf: 0.005
+auto_roi_geometry_max_error: 0.10
+
+use_auto_lidar_roi: true
+
+x_min: -0.641
+x_max: 0.837
+y_min: 1.156
+y_max: 2.065
+z_min: 0.006
+z_max: 1.194
+
+
+# Input
+# LiDAR mounting axes. Each value answers which signed native LiDAR axis
+# points in that physical direction. Left is derived as up x forward.
+# Bundled AVIA data uses the standard +X-forward, +Y-left, +Z-up mounting.
+lidar_forward_axis: "+y"
+lidar_up_axis: "+z"
+lidar_topic: "/pc_raw"
+# ROS2 请使用 rosbag2 目录；若仍是 ROS1 .bag，请先转换：
+#   pip3 install rosbags
+#   rosbags-convert --src mid.bag --dst mid_ros2
+# launch 会把 $(find fast_calib) 替换为包 share 路径
+bag_path: "$(find fast_calib)/calib_data/mid-70"
+image_path: "$(find fast_calib)/calib_data/mid-70/Image_01.jpg"
+
+# Output
+output_path: "$(find fast_calib)/output"
