@@ -48,9 +48,9 @@ fast_calib:
     z_max: 2.0
 
     # Input
-    lidar_topic: "/pc_raw" # /ouster/points /livox/lidar
-    bag_path: "/home/robot/Hikcamera_calibration/FAST-Calib-ROS2/calib_data/mid-70"
-    image_path: "/home/robot/Hikcamera_calibration/FAST-Calib-ROS2/calib_data/mid-70/Image_01.jpg"
+    lidar_topic: "/livox/lidar" # /ouster/points /livox/lidar
+    bag_path: "/home/robot/Hikcamera_calibration/Mid-70CameraCalibration/FAST-Calib-ROS2/calib_data/mid360_11"
+    image_path: "/home/robot/Hikcamera_calibration/Mid-70CameraCalibration/FAST-Calib-ROS2/calib_data/mid360_11/11.png"
 
     # Output
-    output_path: "/home/robot/Hikcamera_calibration/FAST-Calib-ROS2/output"
+    output_path: "/home/robot/Hikcamera_calibration/Mid-70CameraCalibration/FAST-Calib-ROS2/output"

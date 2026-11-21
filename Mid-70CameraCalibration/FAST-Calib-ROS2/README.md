@@ -7,7 +7,7 @@
 ### 启动节点
 ```bash
 # 1) 进入工程目录（你的实际路径）
-cd /home/robot/Hikcamera_calibration/FAST-Calib-ROS2
+cd /home/robot/Hikcamera_calibration/Mid-70CameraCalibration/FAST-Calib-ROS2
 
 # 2) 编译
 colcon build --symlink-install

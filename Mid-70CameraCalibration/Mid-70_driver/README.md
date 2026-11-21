@@ -14,14 +14,14 @@
 ## 编译
 
 ```bash
-cd /home/robot/Hikcamera_calibration/Mid-70_driver
+cd /home/robot/Hikcamera_calibration/Mid-70CameraCalibration/Mid-70_driver
 colcon build --symlink-install
 ```
 
 ## 启动驱动
 
 ```bash
-cd /home/robot/Hikcamera_calibration/Mid-70_driver
+cd /home/robot/Hikcamera_calibration/Mid-70CameraCalibration/Mid-70_driver
 source install/setup.bash
 ros2 launch ./launch/mid70_driver_launch.py
 ```
@@ -31,7 +31,7 @@ ros2 launch ./launch/mid70_driver_launch.py
 先启动驱动，再开新终端执行:
 
 ```bash
-cd /home/robot/Hikcamera_calibration/Mid-70_driver
+cd /home/robot/Hikcamera_calibration/Mid-70CameraCalibration/Mid-70_driver
 source install/setup.bash
 ./record.sh mid70_$(date +%Y%m%d_%H%M%S)
 ```
@@ -47,7 +47,7 @@ source install/setup.bash
 ### 一键可视化最近的包
 
 ```bash
-cd /home/robot/Hikcamera_calibration/Mid-70_driver
+cd /home/robot/Hikcamera_calibration/Mid-70CameraCalibration/Mid-70_driver
 ./visualize.sh
 ```
 

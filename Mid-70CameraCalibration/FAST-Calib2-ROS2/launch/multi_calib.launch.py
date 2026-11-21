@@ -1,11 +1,28 @@
 from launch import LaunchDescription
-from launch.actions import DeclareLaunchArgument, OpaqueFunction
+from launch.actions import DeclareLaunchArgument, OpaqueFunction, SetEnvironmentVariable
 from launch.substitutions import LaunchConfiguration
 from launch_ros.actions import Node
 from ament_index_python.packages import get_package_share_directory
 
 import os
 import yaml
+
+
+def _sanitize_ld_library_path():
+    """Drop known conflicting runtime library paths."""
+    current_ld = os.environ.get('LD_LIBRARY_PATH', '')
+    blocked_prefixes = ('/opt/MVS',)
+    blocked_exact = {'/usr/local/lib'}
+    filtered_entries = []
+    for entry in current_ld.split(':'):
+        if not entry:
+            continue
+        if entry in blocked_exact:
+            continue
+        if any(entry.startswith(prefix) for prefix in blocked_prefixes):
+            continue
+        filtered_entries.append(entry)
+    return ':'.join(filtered_entries)
 
 
 def _launch_setup(context, *args, **kwargs):
@@ -57,6 +74,7 @@ def _launch_setup(context, *args, **kwargs):
 
 def generate_launch_description():
     return LaunchDescription([
+        SetEnvironmentVariable('LD_LIBRARY_PATH', _sanitize_ld_library_path()),
         DeclareLaunchArgument('rviz', default_value='false'),
         DeclareLaunchArgument('config_file', default_value=''),
         DeclareLaunchArgument('output_path', default_value=''),

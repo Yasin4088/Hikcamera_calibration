@@ -37,18 +37,10 @@ y_max: 2.065
 z_min: 0.006
 z_max: 1.194
 
-
-# Input
-# LiDAR mounting axes. Each value answers which signed native LiDAR axis
-# points in that physical direction. Left is derived as up x forward.
-# Bundled AVIA data uses the standard +X-forward, +Y-left, +Z-up mounting.
-lidar_forward_axis: "+y"
+lidar_forward_axis: "+x"
 lidar_up_axis: "+z"
 lidar_topic: "/pc_raw"
-# ROS2 请使用 rosbag2 目录；若仍是 ROS1 .bag，请先转换：
-#   pip3 install rosbags
-#   rosbags-convert --src mid.bag --dst mid_ros2
-# launch 会把 $(find fast_calib) 替换为包 share 路径
+
 bag_path: "$(find fast_calib)/calib_data/mid-70"
 image_path: "$(find fast_calib)/calib_data/mid-70/Image_01.jpg"
 
